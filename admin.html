@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green Power | Admin Panel</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    :root { --primary: #00BCD4; --dark: #0097A7; --light: #f5f5f5; --card: #fff; --text: #333; --border: #ddd; }
+    body { background: var(--light); margin: 0; }
+    .hidden { display: none !important; }
+
+    /* Layout */
+    #admin-login { position: fixed; width: 100%; height: 100vh; background: linear-gradient(135deg, var(--primary), var(--dark)); display: none; align-items: center; justify-content: center; z: 1000; }
+    #admin-login.active { display: flex; }
+    .login-box { background: white; padding: 40px; border-radius: 10px; width: 90%; max-width: 350px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .login-box h2 { color: var(--text); margin-bottom: 30px; text-align: center; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: var(--text); font-weight: bold; }
+    .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 5px; }
+    .login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    .login-btn:hover { background: var(--dark); }
+    .error { background: #ffe6e6; color: #e74c3c; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+
+    /* Admin Dashboard */
+    #admin-panel { display: flex; height: 100vh; }
+    .sidebar { width: 250px; background: var(--dark); color: white; padding: 20px 0; overflow-y: auto; }
+    .sidebar-item { padding: 15px 20px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.3s; }
+    .sidebar-item:hover { background: rgba(0,0,0,0.2); border-left-color: var(--primary); }
+    .sidebar-item.active { background: rgba(0,0,0,0.3); border-left-color: var(--primary); }
+    .sidebar-title { padding: 15px 20px; font-weight: bold; color: rgba(255,255,255,0.7); font-size: 12px; }
+    .main-content { flex: 1; overflow-y: auto; }
+    .topbar { background: white; padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .topbar h1 { color: var(--text); font-size: 22px; }
+    .logout-btn { padding: 8px 15px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; }
+
+    /* Content */
+    .content { padding: 20px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .stat-card h3 { color: var(--text); font-size: 12px; margin-bottom: 10px; }
+    .stat-card .value { font-size: 28px; color: var(--primary); font-weight: bold; }
+
+    /* Tables */
+    .table-container { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: var(--light); padding: 12px; text-align: left; font-weight: bold; color: var(--text); border-bottom: 2px solid var(--border); }
+    td { padding: 12px; border-bottom: 1px solid var(--border); }
+    tr:hover { background: #fafafa; }
+    .btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; transition: all 0.3s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--dark); }
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-success { background: #27ae60; color: white; }
+    .btn-secondary { background: var(--light); color: var(--text); }
+    .btn-small { padding: 5px 10px; font-size: 12px; }
+
+    /* Forms */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .form-grid .form-group { margin-bottom: 0; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; }
+    textarea { resize: vertical; min-height: 100px; font-family: Arial; }
+
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z: 999; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; width: 90%; max-width: 500px; border-radius: 10px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+    .modal-close { float: right; background: none; border: none; font-size: 24px; cursor: pointer; }
+    .modal h2 { color: var(--text); margin-bottom: 20px; margin-top: 0; }
+
+    /* Badges */
+    .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-danger { background: #f8d7da; color: #721c24; }
+    .badge-info { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="admin-login" class="page active">
+  <div class="login-box">
+    <h2>🌿 Green Power Admin</h2>
+    <div id="loginError" class="error hidden"></div>
+    <div class="form-group">
+      <label>Phone</label>
+      <input type="text" id="adminPhone" placeholder="admin" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="••••••" />
+    </div>
+    <button class="login-btn" onclick="adminLogin()">Login</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-panel" class="hidden" style="display: flex;">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-title">ADMIN MENU</div>
+    <div class="sidebar-item active" onclick="switchPage('dashboard')">
+      <i class="fas fa-chart-bar"></i> Dashboard
+    </div>
+    <div class="sidebar-item" onclick="switchPage('users')">
+      <i class="fas fa-users"></i> Users
+    </div>
+    <div class="sidebar-item" onclick="switchPage('plans')">
+      <i class="fas fa-gem"></i> Investment Plans
+    </div>
+    <div class="sidebar-item" onclick="switchPage('deposits')">
+      <i class="fas fa-money-bill-wave"></i> Deposits
+    </div>
+    <div class="sidebar-item" onclick="switchPage('withdrawals')">
+      <i class="fas fa-wallet"></i> Withdrawals
+    </div>
+    <div class="sidebar-item" onclick="switchPage('settings')">
+      <i class="fas fa-cog"></i> Settings
+    </div>
+    <div class="sidebar-item" onclick="adminLogout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content" style="flex: 1;">
+    <div class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <button class="logout-btn" onclick="adminLogout()">Logout</button>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div style="margin-top: 30px;">
+          <h2>Recent Users</h2>
+          <div class="table-container">
+            <table>
+              <tr><th>Phone</th><th>Name</th><th>Balance</th><th>Created</th><th>Action</th></tr>
+              <tbody id="recentUsersList"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="margin-top: 30px;">
+          <h2>Pending Deposits</h2>
+          <div class="table-container">
+            <table>
+              <tr><th>Phone</th><th>Amount</th><th>Method</th><th>Date</th><th>Action</th></tr>
+              <tbody id="pendingDepositsList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div id="page-users" class="page">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2>User Management</h2>
+          <input type="text" id="userSearch" placeholder="Search phone/name" style="width: 250px;" onkeyup="searchUsers()" />
+        </div>
+        <div class="table-container">
+          <table>
+            <tr><th>ID</th><th>Phone</th><th>Name</th><th>Balance</th><th>Status</th><th>Actions</th></tr>
+            <tbody id="usersList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PLANS -->
+      <div id="page-plans" class="page">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2>Investment Plans</h2>
+          <button class="btn btn-primary" onclick="openAddPlanModal()">+ Add Plan</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <tr><th>ID</th><th>Name</th><th>Price</th><th>Total Income</th><th>Cycle Days</th><th>Daily</th><th>Category</th><th>Status</th><th>Actions</th></tr>
+            <tbody id="plansList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DEPOSITS -->
+      <div id="page-deposits" class="page">
+        <div style="margin-bottom: 20px;">
+          <button class="btn btn-primary" onclick="loadDepositsByStatus('pending')" style="margin-right: 10px;">Pending</button>
+          <button class="btn btn-secondary" onclick="loadDepositsByStatus('approved')">Approved</button>
+          <button class="btn btn-secondary" onclick="loadDepositsByStatus('rejected')">Rejected</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <tr><th>ID</th><th>Phone</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            <tbody id="depositsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- WITHDRAWALS -->
+      <div id="page-withdrawals" class="page">
+        <div style="margin-bottom: 20px;">
+          <button class="btn btn-primary" onclick="loadWithdrawalsByStatus('pending')" style="margin-right: 10px;">Pending</button>
+          <button class="btn btn-secondary" onclick="loadWithdrawalsByStatus('approved')">Approved</button>
+          <button class="btn btn-secondary" onclick="loadWithdrawalsByStatus('rejected')">Rejected</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <tr><th>ID</th><th>Phone</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            <tbody id="withdrawalsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="page-settings" class="page">
+        <h2>Platform Settings</h2>
+        <div class="table-container" style="padding: 20px;">
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: var(--text); margin-bottom: 15px;">💳 Payment Settings</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>UPI ID (Main)</label>
+                <input type="text" id="upi_id" placeholder="example@upi" />
+              </div>
+              <div class="form-group">
+                <label>UPI Name</label>
+                <input type="text" id="upi_name" placeholder="Your Business Name" />
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="generatePaymentQR()" style="margin-bottom: 20px;">🔄 Generate Payment QR Code</button>
+            <div id="qrPreview" style="text-align: center; padding: 20px; background: #f9f9f9; border-radius: 10px; display: none;">
+              <h4>QR Code Preview</h4>
+              <img id="qrImage" src="" style="width: 200px; height: 200px; border: 2px solid var(--primary); border-radius: 10px;" />
+              <div style="margin-top: 10px; font-size: 12px; color: var(--light-text);">This QR will be shown during checkout</div>
+            </div>
+          </div>
+
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);" />
+
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: var(--text); margin-bottom: 15px;">🏦 Bank Account Details</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Bank Name</label>
+                <input type="text" id="bank_name" />
+              </div>
+              <div class="form-group">
+                <label>Account Number</label>
+                <input type="text" id="bank_account" />
+              </div>
+              <div class="form-group">
+                <label>IFSC Code</label>
+                <input type="text" id="bank_ifsc" />
+              </div>
+              <div class="form-group">
+                <label>Account Holder Name</label>
+                <input type="text" id="bank_holder" />
+              </div>
+            </div>
+          </div>
+
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);" />
+
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: var(--text); margin-bottom: 15px;">⚙️ Transaction Limits</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Min Deposit (₹)</label>
+                <input type="number" id="min_deposit" />
+              </div>
+              <div class="form-group">
+                <label>Max Deposit (₹)</label>
+                <input type="number" id="max_deposit" />
+              </div>
+              <div class="form-group">
+                <label>Min Withdraw (₹)</label>
+                <input type="number" id="min_withdraw" />
+              </div>
+              <div class="form-group">
+                <label>Max Withdraw (₹)</label>
+                <input type="number" id="max_withdraw" />
+              </div>
+            </div>
+          </div>
+
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);" />
+
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: var(--text); margin-bottom: 15px;">📝 Other Settings</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Site Name</label>
+                <input type="text" id="site_name" />
+              </div>
+              <div class="form-group">
+                <label>Commission Level 1 (%)</label>
+                <input type="number" id="commission_level1" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label>Deposit Instructions</label>
+              <textarea id="deposit_note" placeholder="Instructions for users when making deposits"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label>Withdrawal Note</label>
+              <textarea id="withdrawal_note" placeholder="Instructions for users when requesting withdrawals"></textarea>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="saveSettings()">💾 Save All Settings</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+
+<!-- ADD/EDIT PLAN MODAL -->
+<div id="planModal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closePlanModal()">×</button>
+    <h2 id="planModalTitle">Add Plan</h2>
+    <div id="planError" class="error hidden"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Plan Name</label>
+        <input type="text" id="plan_name" />
+      </div>
+      <div class="form-group">
+        <label>Price (₹)</label>
+        <input type="number" id="plan_price" />
+      </div>
+      <div class="form-group">
+        <label>Total Income (₹)</label>
+        <input type="number" id="plan_total_income" />
+      </div>
+      <div class="form-group">
+        <label>Cycle Days</label>
+        <input type="number" id="plan_cycle_days" />
+      </div>
+      <div class="form-group">
+        <label>Daily Income (₹)</label>
+        <input type="number" id="plan_daily_income" />
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="plan_category">
+          <option value="vip">VIP PRO</option>
+          <option value="fixed">Fixed PRO</option>
+          <option value="event">Event PRO</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="savePlan()">Save Plan</button>
+  </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div id="userModal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeUserModal()">×</button>
+    <h2>Edit User</h2>
+    <div id="userError" class="error hidden"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="user_phone" readonly />
+      </div>
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="user_name" />
+      </div>
+      <div class="form-group">
+        <label>Balance (₹)</label>
+        <input type="number" id="user_balance" />
+      </div>
+      <div class="form-group">
+        <label>Withdraw Balance (₹)</label>
+        <input type="number" id="user_withdraw_balance" />
+      </div>
+      <div class="form-group">
+        <label>VIP Level</label>
+        <input type="number" id="user_vip_level" />
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="user_status">
+          <option value="0">Active</option>
+          <option value="1">Banned</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveUser()">Save Changes</button>
+    <button class="btn btn-danger" onclick="deleteUser()">Delete User</button>
+  </div>
+</div>
+
+<script>
+  const API = '/api';
+  let adminToken = localStorage.getItem('admin_token');
+  let currentEditingId = null;
+  let currentDepositFilter = 'pending';
+  let currentWithdrawFilter = 'pending';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('adminPhone').addEventListener('keydown', submitAdminLoginOnEnter);
+    document.getElementById('adminPassword').addEventListener('keydown', submitAdminLoginOnEnter);
+
+    if (adminToken) {
+      showAdminPanel();
+      loadDashboard();
+    } else {
+      showAdminLogin();
+    }
+  });
+
+  function submitAdminLoginOnEnter(e) {
+    if (e.key === 'Enter') adminLogin();
+  }
+
+  async function adminLogin() {
+    const phone = document.getElementById('adminPhone').value.trim();
+    const password = document.getElementById('adminPassword').value.trim();
+    if (!phone || !password) return alert('Enter credentials');
+
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password })
+      });
+      const data = await res.json();
+      if (data.error) return showError('loginError', data.error);
+      if (!data.user?.is_admin) return showError('loginError', 'Admin access required');
+
+      adminToken = data.token;
+      localStorage.setItem('admin_token', adminToken);
+      showAdminPanel();
+      loadDashboard();
+    } catch (e) {
+      showError('loginError', 'Login failed');
+    }
+  }
+
+  function adminLogout() {
+    localStorage.removeItem('admin_token');
+    adminToken = null;
+    location.reload();
+  }
+
+  function showAdminLogin() {
+    document.getElementById('admin-login').classList.add('active');
+    document.getElementById('admin-panel').classList.add('hidden');
+  }
+
+  function showAdminPanel() {
+    document.getElementById('admin-login').classList.remove('active');
+    document.getElementById('admin-panel').classList.remove('hidden');
+  }
+
+  function switchPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    event.target.closest('.sidebar-item').classList.add('active');
+    
+    const titles = {
+      dashboard: 'Dashboard',
+      users: 'User Management',
+      plans: 'Investment Plans',
+      deposits: 'Deposits',
+      withdrawals: 'Withdrawals',
+      settings: 'Settings'
+    };
+    document.getElementById('pageTitle').textContent = titles[page] || page;
+
+    if (page === 'dashboard') loadDashboard();
+    else if (page === 'users') loadUsers();
+    else if (page === 'plans') loadPlans();
+    else if (page === 'deposits') loadDepositsByStatus('pending');
+    else if (page === 'withdrawals') loadWithdrawalsByStatus('pending');
+    else if (page === 'settings') loadSettings();
+  }
+
+  async function loadDashboard() {
+    try {
+      const res = await fetch(`${API}/admin/dashboard`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) return handleAdminApiError(data.error);
+
+      const statsHTML = `
+        <div class="stat-card">
+          <h3>Total Users</h3>
+          <div class="value">${data.stats.total_users}</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Deposits</h3>
+          <div class="value">₹${data.stats.total_deposits.toFixed(0)}</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Withdrawals</h3>
+          <div class="value">₹${data.stats.total_withdrawals.toFixed(0)}</div>
+        </div>
+        <div class="stat-card">
+          <h3>Plans Sold</h3>
+          <div class="value">${data.stats.total_plans_sold}</div>
+        </div>
+        <div class="stat-card">
+          <h3>Pending Deposits</h3>
+          <div class="value">${data.stats.pending_deposits}</div>
+        </div>
+        <div class="stat-card">
+          <h3>Pending Withdrawals</h3>
+          <div class="value">${data.stats.pending_withdrawals}</div>
+        </div>
+      `;
+      document.getElementById('statsGrid').innerHTML = statsHTML;
+
+      const usersHTML = data.recent_users.map(u => `
+        <tr>
+          <td>${u.phone}</td>
+          <td>${u.name}</td>
+          <td>₹${u.balance}</td>
+          <td>${new Date(u.created_at).toLocaleDateString()}</td>
+          <td><button class="btn btn-primary btn-small" onclick="openEditUserModal(${u.id}, '${u.phone}', '${u.name}', ${u.balance})">Edit</button></td>
+        </tr>
+      `).join('');
+      document.getElementById('recentUsersList').innerHTML = usersHTML;
+
+      const depositsHTML = data.recent_deposits.map(d => `
+        <tr>
+          <td>${d.phone}</td>
+          <td>₹${d.amount}</td>
+          <td>${d.payment_method}</td>
+          <td>${new Date(d.created_at).toLocaleDateString()}</td>
+          <td>
+            <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id})">Approve</button>
+            <button class="btn btn-danger btn-small" onclick="rejectDeposit(${d.id})">Reject</button>
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('pendingDepositsList').innerHTML = depositsHTML;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadUsers() {
+    try {
+      const search = document.getElementById('userSearch')?.value || '';
+      const res = await fetch(`${API}/admin/users?search=${search}`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const data = await res.json();
+
+      const html = data.users.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.phone}</td>
+          <td>${u.name}</td>
+          <td>₹${u.balance}</td>
+          <td>${u.is_banned ? '<span class="badge badge-danger">Banned</span>' : '<span class="badge badge-success">Active</span>'}</td>
+          <td>
+            <button class="btn btn-primary btn-small" onclick="openEditUserModal(${u.id}, '${u.phone}', '${u.name}', ${u.balance}, ${u.withdraw_balance}, ${u.vip_level}, ${u.is_banned})">Edit</button>
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('usersList').innerHTML = html;
+    } catch (e) {
+      localStorage.removeItem('admin_token');
+      adminToken = null;
+      showAdminLogin();
+      showError('loginError', 'Dashboard load failed. Please login again.');
+    }
+  }
+
+  function handleAdminApiError(message) {
+    if (message === 'No token' || message === 'Invalid token' || message === 'Admin only') {
+      localStorage.removeItem('admin_token');
+      adminToken = null;
+      showAdminLogin();
+      showError('loginError', 'Please login again');
+      return;
+    }
+    alert(message || 'Admin request failed');
+  }
+
+  async function loadPlans() {
+    try {
+      const res = await fetch(`${API}/admin/plans`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const plans = await res.json();
+
+      const html = plans.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>₹${p.price}</td>
+          <td>₹${p.total_income}</td>
+          <td>${p.cycle_days}</td>
+          <td>₹${p.daily_income}</td>
+          <td>${p.category}</td>
+          <td>${p.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>'}</td>
+          <td>
+            <button class="btn btn-primary btn-small" onclick="openEditPlanModal(${p.id})">Edit</button>
+            <button class="btn btn-danger btn-small" onclick="deletePlan(${p.id})">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('plansList').innerHTML = html;
+    } catch (e) {}
+  }
+
+  async function loadDepositsByStatus(status) {
+    currentDepositFilter = status;
+    try {
+      const res = await fetch(`${API}/admin/deposits?status=${status}`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const data = await res.json();
+
+      const html = data.deposits.map(d => `
+        <tr>
+          <td>${d.id}</td>
+          <td>${d.phone}</td>
+          <td>₹${d.amount}</td>
+          <td>${d.payment_method}</td>
+          <td><span class="badge badge-${d.status === 'pending' ? 'warning' : d.status === 'approved' ? 'success' : 'danger'}">${d.status}</span></td>
+          <td>${new Date(d.created_at).toLocaleDateString()}</td>
+          <td>
+            ${d.status === 'pending' ? `
+              <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id})">Approve</button>
+              <button class="btn btn-danger btn-small" onclick="rejectDeposit(${d.id})">Reject</button>
+            ` : '<span style="color: #999;">--</span>'}
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('depositsList').innerHTML = html;
+    } catch (e) {}
+  }
+
+  async function loadWithdrawalsByStatus(status) {
+    currentWithdrawFilter = status;
+    try {
+      const res = await fetch(`${API}/admin/withdrawals?status=${status}`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const data = await res.json();
+
+      const html = data.withdrawals.map(w => `
+        <tr>
+          <td>${w.id}</td>
+          <td>${w.phone}</td>
+          <td>₹${w.amount}</td>
+          <td><span class="badge badge-${w.status === 'pending' ? 'warning' : w.status === 'approved' ? 'success' : 'danger'}">${w.status}</span></td>
+          <td>${new Date(w.created_at).toLocaleDateString()}</td>
+          <td>
+            ${w.status === 'pending' ? `
+              <button class="btn btn-success btn-small" onclick="approveWithdrawal(${w.id})">Approve</button>
+              <button class="btn btn-danger btn-small" onclick="rejectWithdrawal(${w.id})">Reject</button>
+            ` : '<span style="color: #999;">--</span>'}
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('withdrawalsList').innerHTML = html;
+    } catch (e) {}
+  }
+
+  async function loadSettings() {
+    try {
+      const res = await fetch(`${API}/admin/settings`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const settings = await res.json();
+
+      for (const [key, value] of Object.entries(settings)) {
+        const elem = document.getElementById(key);
+        if (elem) elem.value = value;
+      }
+    } catch (e) {}
+  }
+
+  async function saveSettings() {
+    const data = {};
+    const keys = ['site_name', 'min_deposit', 'max_deposit', 'min_withdraw', 'max_withdraw', 'commission_level1', 'upi_id', 'upi_name', 'bank_name', 'bank_account', 'bank_ifsc', 'bank_holder', 'deposit_note', 'withdrawal_note'];
+    
+    keys.forEach(k => {
+      const elem = document.getElementById(k);
+      if (elem) data[k] = elem.value;
+    });
+
+    try {
+      const res = await fetch(`${API}/admin/settings`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (result.success) alert('✅ Settings saved!');
+    } catch (e) { alert('Error saving settings'); }
+  }
+
+  async function generatePaymentQR() {
+    const upiId = document.getElementById('upi_id').value;
+    if (!upiId) return alert('Enter UPI ID first');
+
+    try {
+      const res = await fetch(`${API}/generate-qr`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ upi_id: upiId })
+      });
+      const data = await res.json();
+      if (data.qr) {
+        document.getElementById('qrImage').src = data.qr;
+        document.getElementById('qrPreview').style.display = 'block';
+        alert('✅ QR Code Generated! Users will see this during checkout.');
+      }
+    } catch (e) { alert('Error generating QR code'); }
+  }
+
+  function openAddPlanModal() {
+    currentEditingId = null;
+    document.getElementById('planModalTitle').textContent = 'Add Plan';
+    document.getElementById('plan_name').value = '';
+    document.getElementById('plan_price').value = '';
+    document.getElementById('plan_total_income').value = '';
+    document.getElementById('plan_cycle_days').value = '';
+    document.getElementById('plan_daily_income').value = '';
+    document.getElementById('planModal').classList.add('active');
+  }
+
+  function closePlanModal() {
+    document.getElementById('planModal').classList.remove('active');
+  }
+
+  async function openEditPlanModal(id) {
+    currentEditingId = id;
+    try {
+      const res = await fetch(`${API}/admin/plans`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const plans = await res.json();
+      const plan = plans.find(p => p.id === id);
+      if (!plan) return;
+
+      document.getElementById('planModalTitle').textContent = 'Edit Plan';
+      document.getElementById('plan_name').value = plan.name;
+      document.getElementById('plan_price').value = plan.price;
+      document.getElementById('plan_total_income').value = plan.total_income;
+      document.getElementById('plan_cycle_days').value = plan.cycle_days;
+      document.getElementById('plan_daily_income').value = plan.daily_income;
+      document.getElementById('plan_category').value = plan.category;
+      document.getElementById('planModal').classList.add('active');
+    } catch (e) {}
+  }
+
+  async function savePlan() {
+    const data = {
+      name: document.getElementById('plan_name').value,
+      price: parseFloat(document.getElementById('plan_price').value),
+      total_income: parseFloat(document.getElementById('plan_total_income').value),
+      cycle_days: parseInt(document.getElementById('plan_cycle_days').value),
+      daily_income: parseFloat(document.getElementById('plan_daily_income').value),
+      category: document.getElementById('plan_category').value
+    };
+
+    try {
+      const method = currentEditingId ? 'PUT' : 'POST';
+      const url = currentEditingId ? `${API}/admin/plans/${currentEditingId}` : `${API}/admin/plans`;
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (result.error) return alert(result.error);
+      alert(currentEditingId ? 'Plan updated!' : 'Plan created!');
+      closePlanModal();
+      loadPlans();
+    } catch (e) { alert('Error saving plan'); }
+  }
+
+  async function deletePlan(id) {
+    if (!confirm('Delete this plan?')) return;
+    try {
+      await fetch(`${API}/admin/plans/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      loadPlans();
+    } catch (e) {}
+  }
+
+  function openEditUserModal(id, phone, name, balance, withdraw_balance = 0, vip = 0, banned = 0) {
+    currentEditingId = id;
+    document.getElementById('user_phone').value = phone;
+    document.getElementById('user_name').value = name;
+    document.getElementById('user_balance').value = balance;
+    document.getElementById('user_withdraw_balance').value = withdraw_balance;
+    document.getElementById('user_vip_level').value = vip;
+    document.getElementById('user_status').value = banned;
+    document.getElementById('userModal').classList.add('active');
+  }
+
+  function closeUserModal() {
+    document.getElementById('userModal').classList.remove('active');
+  }
+
+  async function saveUser() {
+    const data = {
+      name: document.getElementById('user_name').value,
+      balance: parseFloat(document.getElementById('user_balance').value),
+      withdraw_balance: parseFloat(document.getElementById('user_withdraw_balance').value),
+      vip_level: parseInt(document.getElementById('user_vip_level').value),
+      is_banned: parseInt(document.getElementById('user_status').value)
+    };
+
+    try {
+      const res = await fetch(`${API}/admin/users/${currentEditingId}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('User updated!');
+        closeUserModal();
+        loadUsers();
+      }
+    } catch (e) { alert('Error updating user'); }
+  }
+
+  async function deleteUser() {
+    if (!confirm('Delete this user? This cannot be undone.')) return;
+    try {
+      await fetch(`${API}/admin/users/${currentEditingId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      alert('User deleted!');
+      closeUserModal();
+      loadUsers();
+    } catch (e) {}
+  }
+
+  async function approveDeposit(id) {
+    try {
+      const res = await fetch(`${API}/admin/deposits/${id}/approve`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('Deposit approved!');
+        loadDepositsByStatus(currentDepositFilter);
+        loadDashboard();
+      }
+    } catch (e) { alert('Error approving deposit'); }
+  }
+
+  async function rejectDeposit(id) {
+    const note = prompt('Rejection reason:');
+    if (!note) return;
+    try {
+      const res = await fetch(`${API}/admin/deposits/${id}/reject`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('Deposit rejected!');
+        loadDepositsByStatus(currentDepositFilter);
+        loadDashboard();
+      }
+    } catch (e) {}
+  }
+
+  async function approveWithdrawal(id) {
+    try {
+      const res = await fetch(`${API}/admin/withdrawals/${id}/approve`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('Withdrawal approved!');
+        loadWithdrawalsByStatus(currentWithdrawFilter);
+        loadDashboard();
+      }
+    } catch (e) {}
+  }
+
+  async function rejectWithdrawal(id) {
+    const note = prompt('Rejection reason:');
+    if (!note) return;
+    try {
+      const res = await fetch(`${API}/admin/withdrawals/${id}/reject`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('Withdrawal rejected!');
+        loadWithdrawalsByStatus(currentWithdrawFilter);
+        loadDashboard();
+      }
+    } catch (e) {}
+  }
+
+  function searchUsers() {
+    loadUsers();
+  }
+
+  function showError(id, msg) {
+    const elem = document.getElementById(id);
+    if (elem) {
+      elem.textContent = msg;
+      elem.classList.remove('hidden');
+    }
+  }
+</script>
+
+</body>
+</html>
