@@ -728,12 +728,12 @@ initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(asy
   const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Green Power Server Running on http://127.0.0.1:${PORT}`);
+  console.log(`✅ Green Power Server Running on port ${PORT}`);
 
-    console.log(`📱 User App: http://localhost:${PORT}`);
-    console.log(`⚙️  Admin Panel: http://localhost:${PORT}/admin.html`);
-    console.log(`🔐 Admin Login: phone=admin | password=admin123\n`);
-  });
+  console.log(`📱 User App Running`);
+  console.log(`⚙️ Admin Panel Ready`);
+  console.log(`🔐 Admin Login: phone=admin | password=admin123`);
+});
 
 }).catch(err => {
   console.error('❌ Database init failed:', err);
