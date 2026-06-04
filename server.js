@@ -9,7 +9,7 @@ const QRCode = require('qrcode');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = '0.0.0.0';
 const JWT_SECRET = 'greenpower_secret_key_2024!@#';
 
 // Create uploads directory
