@@ -725,7 +725,7 @@ initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(asy
   });
 
   // ✅ Single app.listen at the end
-  const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Green Power Server Running on port ${PORT}`);
