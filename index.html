@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Green Power | Your Financial Expert</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -12,6 +12,38 @@
     .page { display: none; }
     .page.active { display: block; }
     .hidden { display: none !important; }
+
+    /* Smooth UI */
+    html { scroll-behavior: smooth; }
+    .page.active { animation: pageIn 180ms ease-out; }
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .plan-card { will-change: transform; }
+    .btn, .plan-card { -webkit-tap-highlight-color: transparent; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 14px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.82);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      z-index: 4000;
+      display: none;
+      max-width: calc(100vw - 24px);
+      text-align: center;
+    }
+    .toast.show { display: block; animation: toastIn 180ms ease-out; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
 
     /* Login Page */
     #page-login { position: fixed; width: 100%; height: 100vh; top: 0; left: 0; background: linear-gradient(135deg, var(--primary), var(--dark)); display: none; align-items: center; justify-content: center; z: 1000; }

@@ -8,7 +8,7 @@ const cors = require('cors');
 const QRCode = require('qrcode');
 
 const app = express();
-// const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 const JWT_SECRET = 'greenpower_secret_key_2024!@#';
 
@@ -90,9 +90,6 @@ const wrapDatabase = (rawDb) => ({
 });
 
 initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(async (SQLLib) => {
-
-  // Ensure DB is initialized before routes
-  const PORT = process.env.PORT || 3000;
 
   // ✅ FIX: Agar .db file exist kare toh load karo, nahi toh naya banao
   let SQL;
@@ -477,64 +474,71 @@ initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(asy
     res.json(deposits);
   });
 
-  // ===== WITHDRAWALS =====
-  app.post('/api/withdrawals', auth, (req, res) => {
-    const {
-      amount,
-      bank_card_id,
-      upi_id,
-      account_number,
-      ifsc
-    } = req.body;
+// ===== WITHDRAWALS =====
+app.post('/api/withdrawals', auth, (req, res) => {
+  const { amount, bank_card_id, upi_id, account_number, ifsc, account_name } = req.body;
 
-    if (!amount || parseFloat(amount) <= 0) {
-      return res.status(400).json({ error: 'Invalid amount' });
+  if (!amount || parseFloat(amount) <= 0) return res.status(400).json({ error: 'Invalid amount' });
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const minWith = parseFloat(db.prepare("SELECT value FROM settings WHERE key = 'min_withdraw'").get()?.value || '100');
+  const amt = parseFloat(amount);
+
+  if (amt < minWith) return res.status(400).json({ error: `Min: ₹${minWith}` });
+  if (user.withdraw_balance < amt) return res.status(400).json({ error: 'Insufficient balance' });
+
+  let cardInfo = {
+    bank_name: '',
+    account_number: account_number || '',
+    account_name: account_name || '',
+    ifsc: ifsc || '',
+    upi_id: upi_id || ''
+  };
+
+  if (bank_card_id) {
+    const card = db.prepare('SELECT * FROM bank_cards WHERE id = ? AND user_id = ?').get(bank_card_id, req.user.id);
+    if (card) {
+      cardInfo = {
+        bank_name: card.bank_name,
+        account_number: card.account_number,
+        account_name: card.account_name,
+        ifsc: card.ifsc,
+        upi_id: card.upi_id
+      };
     }
+  }
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-    const minWith = parseFloat(db.prepare("SELECT value FROM settings WHERE key = 'min_withdraw'").get()?.value || '100');
+  // Deduct withdraw balance immediately
+  db.prepare('UPDATE users SET withdraw_balance = withdraw_balance - ? WHERE id = ?').run(amt, req.user.id);
 
-    const amt = parseFloat(amount);
-    if (amt < minWith) return res.status(400).json({ error: `Min: ₹${minWith}` });
-    if (user.withdraw_balance < amt) return res.status(400).json({ error: 'Insufficient balance' });
+  // Create withdrawal request (admin will see these details)
+  db.prepare(
+    `INSERT INTO withdrawals
+      (user_id, amount, bank_name, account_number, account_name, ifsc, upi_id, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`
+  ).run(
+    req.user.id,
+    amt,
+    cardInfo.bank_name || '',
+    cardInfo.account_number || '',
+    cardInfo.account_name || '',
+    cardInfo.ifsc || '',
+    cardInfo.upi_id || ''
+  );
 
-    let cardInfo = {};
-    if (bank_card_id) {
-      const card = db.prepare('SELECT * FROM bank_cards WHERE id = ? AND user_id = ?').get(bank_card_id, req.user.id);
-      if (card) {
-        cardInfo = {
-          bank_name: card.bank_name,
-          account_number: card.account_number,
-          account_name: card.account_name,
-          ifsc: card.ifsc,
-          upi_id: card.upi_id
-        };
-      }
-    }
+  // Ledger
+  db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)')
+    .run(req.user.id, 'withdraw', -amt, 'Withdrawal request');
 
-    db.prepare('UPDATE users SET withdraw_balance = withdraw_balance - ? WHERE id = ?').run(amt, req.user.id);
-    db.prepare('INSERT INTO withdrawals (user_id, amount, bank_name, account_number, account_name, ifsc, upi_id) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(
-        req.user.id,
-        amt,
-        cardInfo.bank_name || '',
-        cardInfo.account_number || account_number || '',
-        cardInfo.account_name || '',
-        cardInfo.ifsc || ifsc || '',
-        cardInfo.upi_id || upi_id || ''
-      );
-
-    db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)')
-      .run(req.user.id, 'withdraw', -amt, 'Withdrawal request');
-
-    res.json({ success: true, message: 'Withdrawal requested. Processing in 24 hours.' });
-  });
+  res.json({ success: true, message: 'Withdrawal requested. Processing in 24 hours.' });
+});
 
   app.get('/api/withdrawals', auth, (req, res) => {
     const withdrawals = db.prepare('SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
     res.json(withdrawals);
   });
-
 
   app.post('/api/upload', auth, upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file' });
@@ -756,17 +760,19 @@ initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(asy
 
 // ✅ Single app.listen at the end
 
-// const PORT = process.env.PORT || 30000;
-
-
-// ✅ Start server
 app.listen(PORT, '0.0.0.0', () => {
+
   console.log(`✅ Green Power Server Running on port ${PORT}`);
+
   console.log(`📱 User App Running`);
+
   console.log(`⚙️ Admin Panel Ready`);
+
+  console.log(`🔐 Admin Login: phone=admin | password=admin123`);
+
 });
 
-
-
+// initDatabase removed (server DB init runs inside initSqlJs().then(...))
+});
 
 
