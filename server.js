@@ -475,9 +475,48 @@ initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(asy
   });
 
   // ===== WITHDRAWALS =====
-  app.post('/api/withdrawals', auth, (req, res) => {
-    const { amount, bank_card_id } = req.body;
-    if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
+app.post('/api/withdrawals', auth, (req, res) => {
+
+  const {
+    amount,
+    bank_card_id,
+    upi_id,
+    account_number,
+    ifsc
+  } = req.body;
+
+  try {
+
+    db.prepare(
+      `INSERT INTO withdrawals
+      (user_id, amount, bank_name, account_number, account_name, ifsc, upi_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      req.user.id,
+      parseFloat(amount),
+      '',
+      account_number || '',
+      '',
+      ifsc || '',
+      upi_id || ''
+    );
+
+    res.json({
+      success: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: 'Withdraw failed'
+    });
+
+  }
+
+});
+     return res.status(400).json({ error: 'Invalid amount' });
     
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
     const minWith = parseFloat(db.prepare("SELECT value FROM settings WHERE key = 'min_withdraw'").get()?.value || '100');
