@@ -91,6 +91,9 @@ const wrapDatabase = (rawDb) => ({
 
 initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(async (SQLLib) => {
 
+  // Ensure DB is initialized before routes
+  const PORT = process.env.PORT || 3000;
+
   // ✅ FIX: Agar .db file exist kare toh load karo, nahi toh naya banao
   let SQL;
   if (fs.existsSync(DB_FILE) && fs.statSync(DB_FILE).size > 0) {
@@ -756,27 +759,14 @@ initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(asy
 // const PORT = process.env.PORT || 30000;
 
 
-// Start server
+// ✅ Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Green Power Server Running on port ${PORT}`);
   console.log(`📱 User App Running`);
   console.log(`⚙️ Admin Panel Ready`);
 });
 
-// Initialize database safely
-(async () => {
-  try {
-    if (typeof initDatabase === 'function') {
-      await initDatabase();
-      console.log('✅ Database initialized successfully');
-    } else {
-      console.log('⚠️ initDatabase function not found');
-    }
-  } catch (err) {
-    console.error('❌ Database init failed:', err);
-  }
-// removed end-initDatabase wrapper
-})();
+
 
 
 
