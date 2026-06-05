@@ -651,26 +651,26 @@
       });
       const data = await res.json();
 
-      const html = data.withdrawals.map(w => `
+      const html = data.deposits.map(d => `
   <tr>
-    <td>${w.id}</td>
-    <td>${w.phone}</td>
-    <td>₹${w.amount}</td>
+    <td>${d.id}</td>
+    <td>${d.phone}</td>
+    <td>₹${d.amount}</td>
 
-    <td>${w.upi_id || '--'}</td>
-    <td>${w.account_number || '--'}</td>
-    <td>${w.ifsc || '--'}</td>
+    <td>${d.payment_method || '--'}</td>
+    <td>${d.transaction_id || '--'}</td>
+    <td>${d.proof_image ? 'Uploaded' : '--'}</td>
 
-    <td><span class="badge badge-${w.status === 'pending' ? 'warning' : w.status === 'approved' ? 'success' : 'danger'}">${w.status}</span></td>
+    <td><span class="badge badge-${d.status === 'pending' ? 'warning' : d.status === 'approved' ? 'success' : 'danger'}">${d.status}</span></td>
 
-    <td>${new Date(w.created_at).toLocaleDateString()}</td>
-          <td>
-            ${d.status === 'pending' ? `
-              <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id})">Approve</button>
-              <button class="btn btn-danger btn-small" onclick="rejectDeposit(${d.id})">Reject</button>
-            ` : '<span style="color: #999;">--</span>'}
-          </td>
-        </tr>
+    <td>${new Date(d.created_at).toLocaleDateString()}</td>
+    <td>
+      ${d.status === 'pending' ? `
+        <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id})">Approve</button>
+        <button class="btn btn-danger btn-small" onclick="rejectDeposit(${d.id})">Reject</button>
+      ` : '<span style="color: #999;">--</span>'}
+    </td>
+  </tr>
       `).join('');
       document.getElementById('depositsList').innerHTML = html;
     } catch (e) {}
