@@ -213,7 +213,21 @@
         </div>
         <div class="table-container">
           <table>
-            <tr><th>ID</th><th>Phone</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            <tr>
+  <th>ID</th>
+  <th>Phone</th>
+  <th>Amount</th>
+
+  <th>UPI ID</th>
+  <th>Account Number</th>
+  <th>IFSC</th>
+
+  <th>Status</th>
+  <th>Date</th>
+  <th>Actions</th>
+</tr>
+
+<tbody id="withdrawalsList"></tbody>
             <tbody id="withdrawalsList"></tbody>
           </table>
         </div>
@@ -632,14 +646,19 @@
       });
       const data = await res.json();
 
-      const html = data.deposits.map(d => `
-        <tr>
-          <td>${d.id}</td>
-          <td>${d.phone}</td>
-          <td>₹${d.amount}</td>
-          <td>${d.payment_method}</td>
-          <td><span class="badge badge-${d.status === 'pending' ? 'warning' : d.status === 'approved' ? 'success' : 'danger'}">${d.status}</span></td>
-          <td>${new Date(d.created_at).toLocaleDateString()}</td>
+      const html = data.withdrawals.map(w => `
+  <tr>
+    <td>${w.id}</td>
+    <td>${w.phone}</td>
+    <td>₹${w.amount}</td>
+
+    <td>${w.upi_id || '--'}</td>
+    <td>${w.account_number || '--'}</td>
+    <td>${w.ifsc || '--'}</td>
+
+    <td><span class="badge badge-${w.status === 'pending' ? 'warning' : w.status === 'approved' ? 'success' : 'danger'}">${w.status}</span></td>
+
+    <td>${new Date(w.created_at).toLocaleDateString()}</td>
           <td>
             ${d.status === 'pending' ? `
               <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id})">Approve</button>
