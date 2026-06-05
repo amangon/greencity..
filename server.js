@@ -763,18 +763,25 @@ app.post('/api/withdrawals', auth, (req, res) => {
     process.exit(0);
   });
 
-  // ✅ Single app.listen at the end
-const PORT = process.env.PORT || 10000;
+// ✅ Single app.listen at the end
 
 app.listen(PORT, '0.0.0.0', () => {
+
   console.log(`✅ Green Power Server Running on port ${PORT}`);
 
   console.log(`📱 User App Running`);
+
   console.log(`⚙️ Admin Panel Ready`);
+
   console.log(`🔐 Admin Login: phone=admin | password=admin123`);
+
 });
 
+initDatabase().then(() => {
+  console.log('✅ Database initialized successfully');
 }).catch(err => {
   console.error('❌ Database init failed:', err);
+
   process.exit(1);
+
 });
