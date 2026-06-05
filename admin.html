@@ -432,7 +432,12 @@
 
     if (adminToken) {
       showAdminPanel();
+      // Load some UI by default
       loadDashboard();
+      // Ensure settings values show correctly even if user doesn't switch page manually
+      setTimeout(() => {
+        try { loadSettings(); } catch (e) {}
+      }, 250);
     } else {
       showAdminLogin();
     }
