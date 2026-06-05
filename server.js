@@ -8,7 +8,7 @@ const cors = require('cors');
 const QRCode = require('qrcode');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 const JWT_SECRET = 'greenpower_secret_key_2024!@#';
 
@@ -475,68 +475,55 @@ initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(asy
   });
 
   // ===== WITHDRAWALS =====
-app.post('/api/withdrawals', auth, (req, res) => {
+  app.post('/api/withdrawals', auth, (req, res) => {
+    const {
+      amount,
+      bank_card_id,
+      upi_id,
+      account_number,
+      ifsc
+    } = req.body;
 
-  const {
-    amount,
-    bank_card_id,
-    upi_id,
-    account_number,
-    ifsc
-  } = req.body;
+    if (!amount || parseFloat(amount) <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
 
-  try {
-
-    db.prepare(
-      `INSERT INTO withdrawals
-      (user_id, amount, bank_name, account_number, account_name, ifsc, upi_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      req.user.id,
-      parseFloat(amount),
-      '',
-      account_number || '',
-      '',
-      ifsc || '',
-      upi_id || ''
-    );
-
-    res.json({
-      success: true
-    });
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      error: 'Withdraw failed'
-    });
-
-  }
-
-});
-     return res.status(400).json({ error: 'Invalid amount' });
-    
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
     const minWith = parseFloat(db.prepare("SELECT value FROM settings WHERE key = 'min_withdraw'").get()?.value || '100');
-    
-    if (amount < minWith) return res.status(400).json({ error: `Min: ₹${minWith}` });
-    if (user.withdraw_balance < amount) return res.status(400).json({ error: 'Insufficient balance' });
-    
+
+    const amt = parseFloat(amount);
+    if (amt < minWith) return res.status(400).json({ error: `Min: ₹${minWith}` });
+    if (user.withdraw_balance < amt) return res.status(400).json({ error: 'Insufficient balance' });
+
     let cardInfo = {};
     if (bank_card_id) {
       const card = db.prepare('SELECT * FROM bank_cards WHERE id = ? AND user_id = ?').get(bank_card_id, req.user.id);
-      if (card) cardInfo = { bank_name: card.bank_name, account_number: card.account_number, account_name: card.account_name, ifsc: card.ifsc, upi_id: card.upi_id };
+      if (card) {
+        cardInfo = {
+          bank_name: card.bank_name,
+          account_number: card.account_number,
+          account_name: card.account_name,
+          ifsc: card.ifsc,
+          upi_id: card.upi_id
+        };
+      }
     }
-    
-    db.prepare('UPDATE users SET withdraw_balance = withdraw_balance - ? WHERE id = ?').run(parseFloat(amount), req.user.id);
+
+    db.prepare('UPDATE users SET withdraw_balance = withdraw_balance - ? WHERE id = ?').run(amt, req.user.id);
     db.prepare('INSERT INTO withdrawals (user_id, amount, bank_name, account_number, account_name, ifsc, upi_id) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(req.user.id, parseFloat(amount), cardInfo.bank_name || '', cardInfo.account_number || '', cardInfo.account_name || '', cardInfo.ifsc || '', cardInfo.upi_id || '');
-    
+      .run(
+        req.user.id,
+        amt,
+        cardInfo.bank_name || '',
+        cardInfo.account_number || account_number || '',
+        cardInfo.account_name || '',
+        cardInfo.ifsc || ifsc || '',
+        cardInfo.upi_id || upi_id || ''
+      );
+
     db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)')
-      .run(req.user.id, 'withdraw', -amount, 'Withdrawal request');
-    
+      .run(req.user.id, 'withdraw', -amt, 'Withdrawal request');
+
     res.json({ success: true, message: 'Withdrawal requested. Processing in 24 hours.' });
   });
 
@@ -544,6 +531,7 @@ app.post('/api/withdrawals', auth, (req, res) => {
     const withdrawals = db.prepare('SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
     res.json(withdrawals);
   });
+
 
   app.post('/api/upload', auth, upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file' });
@@ -765,20 +753,29 @@ app.post('/api/withdrawals', auth, (req, res) => {
 
 // ✅ Single app.listen at the end
 
-const PORT = process.env.PORT || 10000;
+// const PORT = process.env.PORT || 30000;
 
+
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Green Power Server Running on port ${PORT}`);
   console.log(`📱 User App Running`);
   console.log(`⚙️ Admin Panel Ready`);
-  console.log(`🔐 Admin Login: phone=admin | password=admin123`);
 });
 
-initDatabase()
-  .then(() => {
-    console.log('✅ Database initialized successfully');
-  })
-  .catch(err => {
+// Initialize database safely
+(async () => {
+  try {
+    if (typeof initDatabase === 'function') {
+      await initDatabase();
+      console.log('✅ Database initialized successfully');
+    } else {
+      console.log('⚠️ initDatabase function not found');
+    }
+  } catch (err) {
     console.error('❌ Database init failed:', err);
-    process.exit(1);
-  });
+  }
+// removed end-initDatabase wrapper
+})();
+
+
