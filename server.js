@@ -6,777 +6,623 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const QRCode = require('qrcode');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
-const JWT_SECRET = 'greenpower_secret_key_2024!@#';
+const JWT_SECRET = process.env.JWT_SECRET || 'greenpower_secret_key_2024!@#';
+
+// ✅ SUPABASE CLIENT
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
 // Create uploads directory
 if (!fs.existsSync('./public/uploads')) {
   fs.mkdirSync('./public/uploads', { recursive: true });
 }
 
-// Database (sql.js = pure JS, no native bindings)
-const initSqlJs = require('sql.js');
-const DB_FILE = 'greenpower.db';
-let db;
-
-const toSqlParams = (params) => {
-  if (params.length === 0) return undefined;
-  if (params.length === 1 && (Array.isArray(params[0]) || (params[0] && typeof params[0] === 'object'))) {
-    return params[0];
-  }
-  return params;
-};
-
-const getLastInsertRowid = (rawDb) => {
-  const result = rawDb.exec('SELECT last_insert_rowid() AS id');
-  return result[0]?.values?.[0]?.[0] || 0;
-};
-
-const saveDatabase = (rawDb) => {
-  fs.writeFileSync(DB_FILE, Buffer.from(rawDb.export()));
-};
-
-const wrapDatabase = (rawDb) => ({
-  exec: (sql) => {
-    const result = rawDb.exec(sql);
-    saveDatabase(rawDb);
-    return result;
-  },
-  export: () => rawDb.export(),
-  prepare: (sql) => ({
-    run: (...params) => {
-      const stmt = rawDb.prepare(sql);
-      let result;
-      try {
-        const sqlParams = toSqlParams(params);
-        if (sqlParams === undefined) stmt.run();
-        else stmt.run(sqlParams);
-        result = {
-          changes: rawDb.getRowsModified(),
-          lastInsertRowid: getLastInsertRowid(rawDb)
-        };
-      } finally {
-        stmt.free();
-      }
-      saveDatabase(rawDb);
-      return result;
-    },
-    get: (...params) => {
-      const stmt = rawDb.prepare(sql);
-      try {
-        const sqlParams = toSqlParams(params);
-        if (sqlParams !== undefined) stmt.bind(sqlParams);
-        return stmt.step() ? stmt.getAsObject() : undefined;
-      } finally {
-        stmt.free();
-      }
-    },
-    all: (...params) => {
-      const stmt = rawDb.prepare(sql);
-      const rows = [];
-      try {
-        const sqlParams = toSqlParams(params);
-        if (sqlParams !== undefined) stmt.bind(sqlParams);
-        while (stmt.step()) rows.push(stmt.getAsObject());
-        return rows;
-      } finally {
-        stmt.free();
-      }
-    }
-  })
+// Multer setup
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => { cb(null, './public/uploads/'); },
+  filename: (req, file, cb) => { cb(null, Date.now() + '_' + Math.random().toString(36).substr(2, 9) + path.extname(file.originalname)); }
 });
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
-initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(async (SQLLib) => {
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.static('public'));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
-  // ✅ FIX: Agar .db file exist kare toh load karo, nahi toh naya banao
-  let SQL;
-  if (fs.existsSync(DB_FILE) && fs.statSync(DB_FILE).size > 0) {
-    SQL = fs.readFileSync(DB_FILE);
-    db = wrapDatabase(new SQLLib.Database(SQL));
-  } else {
-    db = wrapDatabase(new SQLLib.Database()); // naya empty database
-  }
+// JWT Auth
+const auth = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch { res.status(401).json({ error: 'Invalid token' }); }
+};
 
-  db.exec('PRAGMA journal_mode = WAL;');
-
-  // Initialize database tables
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      phone TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      name TEXT DEFAULT 'User',
-      avatar TEXT DEFAULT '',
-      invite_code TEXT UNIQUE,
-      invited_by TEXT DEFAULT NULL,
-      balance REAL DEFAULT 0,
-      withdraw_balance REAL DEFAULT 0,
-      total_recharge REAL DEFAULT 0,
-      total_withdraw REAL DEFAULT 0,
-      vip_level INTEGER DEFAULT 0,
-      is_admin INTEGER DEFAULT 0,
-      is_banned INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-    
-    CREATE TABLE IF NOT EXISTS investment_plans (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      price REAL NOT NULL,
-      total_income REAL NOT NULL,
-      cycle_days INTEGER NOT NULL,
-      daily_income REAL NOT NULL,
-      category TEXT DEFAULT 'vip',
-      image_url TEXT DEFAULT '',
-      description TEXT DEFAULT '',
-      is_active INTEGER DEFAULT 1,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-    
-    CREATE TABLE IF NOT EXISTS user_purchases (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      plan_id INTEGER NOT NULL,
-      purchase_date TEXT DEFAULT CURRENT_TIMESTAMP,
-      expire_date TEXT,
-      daily_income REAL NOT NULL,
-      total_income REAL NOT NULL,
-      earned_income REAL DEFAULT 0,
-      days_remaining INTEGER,
-      status TEXT DEFAULT 'active',
-      FOREIGN KEY (user_id) REFERENCES users(id),
-      FOREIGN KEY (plan_id) REFERENCES investment_plans(id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS deposits (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      amount REAL NOT NULL,
-      payment_method TEXT DEFAULT 'UPI',
-      proof_image TEXT DEFAULT '',
-      transaction_id TEXT DEFAULT '',
-      status TEXT DEFAULT 'pending',
-      note TEXT DEFAULT '',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      approved_at TEXT DEFAULT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS withdrawals (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      amount REAL NOT NULL,
-      bank_name TEXT DEFAULT '',
-      account_number TEXT DEFAULT '',
-      account_name TEXT DEFAULT '',
-      ifsc TEXT DEFAULT '',
-      upi_id TEXT DEFAULT '',
-      status TEXT DEFAULT 'pending',
-      note TEXT DEFAULT '',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      approved_at TEXT DEFAULT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS bank_cards (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      type TEXT DEFAULT 'bank',
-      bank_name TEXT DEFAULT '',
-      account_name TEXT DEFAULT '',
-      account_number TEXT DEFAULT '',
-      ifsc TEXT DEFAULT '',
-      upi_id TEXT DEFAULT '',
-      is_default INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS transactions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      type TEXT NOT NULL,
-      amount REAL NOT NULL,
-      description TEXT DEFAULT '',
-      balance_after REAL DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS commissions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      from_user_id INTEGER NOT NULL,
-      amount REAL NOT NULL,
-      type TEXT DEFAULT 'referral',
-      description TEXT DEFAULT '',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id),
-      FOREIGN KEY (from_user_id) REFERENCES users(id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT DEFAULT ''
-    );
-  `);
-
-  // Insert default settings
-  const defaultSettings = [
-    ['site_name', 'Green Power'],
-    ['site_logo', ''],
-    ['min_deposit', '100'],
-    ['max_deposit', '1000000'],
-    ['min_withdraw', '100'],
-    ['max_withdraw', '500000'],
-    ['commission_level1', '10'],
-    ['commission_level2', '5'],
-    ['commission_level3', '3'],
-    ['upi_id', 'greenpower@upi'],
-    ['upi_name', 'Green Power'],
-    ['bank_name', 'HDFC Bank'],
-    ['bank_account', '1234567890'],
-    ['bank_ifsc', 'HDFC0000001'],
-    ['bank_holder', 'Green Power India'],
-    ['withdrawal_note', 'Processed within 24 hours'],
-    ['deposit_note', 'Send payment and upload screenshot'],
-    ['welcome_bonus', '0'],
-  ];
-
-  for (const [key, value] of defaultSettings) {
-    try {
-      db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run(key, value);
-    } catch (e) {}
-  }
-
-  // Insert default plans
-  const plansCount = db.prepare('SELECT COUNT(*) as count FROM investment_plans').get();
-  if (plansCount.count === 0) {
-    const planData = [
-      { name: 'Green Power Starter', price: 495, total_income: 8000, cycle_days: 47, daily_income: 170, category: 'vip' },
-      { name: 'Green Power Basic', price: 1095, total_income: 19000, cycle_days: 47, daily_income: 404, category: 'vip' },
-      { name: 'Green Power Plus', price: 2095, total_income: 38000, cycle_days: 47, daily_income: 809, category: 'vip' },
-      { name: 'Green Power Pro', price: 4595, total_income: 85000, cycle_days: 47, daily_income: 1809, category: 'vip' },
-      { name: 'Solar Fixed 30', price: 1000, total_income: 15000, cycle_days: 30, daily_income: 500, category: 'fixed' },
-      { name: 'Wind Fixed 60', price: 5000, total_income: 80000, cycle_days: 60, daily_income: 1333, category: 'fixed' },
-      { name: 'Hydro Event', price: 299, total_income: 5000, cycle_days: 20, daily_income: 250, category: 'event' },
-    ];
-    for (const plan of planData) {
-      db.prepare('INSERT INTO investment_plans (name, price, total_income, cycle_days, daily_income, category) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(plan.name, plan.price, plan.total_income, plan.cycle_days, plan.daily_income, plan.category);
-    }
-  }
-
-  // Create default admin
-  const adminExists = db.prepare('SELECT id FROM users WHERE is_admin = 1').get();
-  if (!adminExists) {
-    const hashedPwd = bcrypt.hashSync('admin123', 10);
-    db.prepare('INSERT INTO users (phone, password, name, invite_code, is_admin) VALUES (?, ?, ?, ?, 1)')
-      .run('admin', hashedPwd, 'Admin', 'ADMIN001');
-  }
-
-  // Multer setup
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => { cb(null, './public/uploads/'); },
-    filename: (req, file, cb) => { cb(null, Date.now() + '_' + Math.random().toString(36).substr(2, 9) + path.extname(file.originalname)); }
+const adminAuth = (req, res, next) => {
+  auth(req, res, () => {
+    if (!req.user.is_admin) return res.status(403).json({ error: 'Admin only' });
+    next();
   });
-  const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+};
 
-  // Middleware
-  app.use(cors());
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ limit: '50mb', extended: true }));
-  app.use(express.static('public'));
-  app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-  app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-  app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+const generateInviteCode = () => Math.floor(1000000000 + Math.random() * 9000000000).toString();
 
-  // JWT Auth
-  const auth = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'No token' });
-    try {
-      req.user = jwt.verify(token, JWT_SECRET);
-      next();
-    } catch { res.status(401).json({ error: 'Invalid token' }); }
-  };
-
-  const adminAuth = (req, res, next) => {
-    auth(req, res, () => {
-      if (!req.user.is_admin) return res.status(403).json({ error: 'Admin only' });
-      next();
-    });
-  };
-
-  const generateInviteCode = () => Math.floor(1000000000 + Math.random() * 9000000000).toString();
-
-  // ===== AUTH =====
-  app.post('/api/auth/register', (req, res) => {
+// ===== AUTH =====
+app.post('/api/auth/register', async (req, res) => {
+  try {
     const { phone, password, invite_code } = req.body;
     if (!phone || !password) return res.status(400).json({ error: 'Phone and password required' });
-    
-    const existing = db.prepare('SELECT id FROM users WHERE phone = ?').get(phone);
+
+    const { data: existing } = await supabase.from('users').select('id').eq('phone', phone).single();
     if (existing) return res.status(400).json({ error: 'Already registered' });
-    
+
     let invitedBy = null;
     if (invite_code) {
-      const inviter = db.prepare('SELECT id FROM users WHERE invite_code = ?').get(invite_code);
+      const { data: inviter } = await supabase.from('users').select('id').eq('invite_code', invite_code).single();
       if (inviter) invitedBy = invite_code;
     }
-    
+
     const hashedPwd = bcrypt.hashSync(password, 10);
     const newCode = generateInviteCode();
-    const welcomeBonus = parseFloat(db.prepare("SELECT value FROM settings WHERE key = 'welcome_bonus'").get()?.value || '0');
-    
-    const result = db.prepare('INSERT INTO users (phone, password, invite_code, invited_by, balance) VALUES (?, ?, ?, ?, ?)')
-      .run(phone, hashedPwd, newCode, invitedBy, welcomeBonus);
-    
+
+    const { data: settings } = await supabase.from('settings').select('value').eq('key', 'welcome_bonus').single();
+    const welcomeBonus = parseFloat(settings?.value || '0');
+
+    const { data: newUser, error } = await supabase.from('users')
+      .insert({ phone, password: hashedPwd, invite_code: newCode, invited_by: invitedBy, balance: welcomeBonus })
+      .select().single();
+
+    if (error) return res.status(400).json({ error: error.message });
+
     if (welcomeBonus > 0) {
-      db.prepare('INSERT INTO transactions (user_id, type, amount, description, balance_after) VALUES (?, ?, ?, ?, ?)')
-        .run(result.lastInsertRowid, 'bonus', welcomeBonus, 'Welcome bonus', welcomeBonus);
+      await supabase.from('transactions').insert({ user_id: newUser.id, type: 'bonus', amount: welcomeBonus, description: 'Welcome bonus', balance_after: welcomeBonus });
     }
-    
-    const token = jwt.sign({ id: result.lastInsertRowid, phone, is_admin: 0 }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ success: true, token, user: { id: result.lastInsertRowid, phone, invite_code: newCode } });
-  });
 
-  app.post('/api/auth/login', (req, res) => {
-    const { phone, password } = req.body;
-    const user = db.prepare('SELECT * FROM users WHERE phone = ?').get(phone);
-    if (!user || !bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: 'Invalid credentials' });
-    if (user.is_banned) return res.status(403).json({ error: 'Account banned' });
-    
-    const token = jwt.sign({ id: user.id, phone, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ success: true, token, user: { id: user.id, phone, name: user.name, invite_code: user.invite_code, is_admin: user.is_admin } });
-  });
-
-  // ===== USER ROUTES =====
-  app.get('/api/user/profile', auth, (req, res) => {
-    const user = db.prepare('SELECT id, phone, name, avatar, invite_code, balance, withdraw_balance, total_recharge, total_withdraw, vip_level, created_at FROM users WHERE id = ?').get(req.user.id);
-    const team = db.prepare("SELECT COUNT(*) as count FROM users WHERE invited_by = ?").get(user.invite_code);
-    const earned = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM commissions WHERE user_id = ?").get(user.id);
-    res.json({ ...user, team_count: team.count, total_earned: earned.total });
-  });
-
-  app.put('/api/user/profile', auth, upload.single('avatar'), (req, res) => {
-    const { name } = req.body;
-    const avatar = req.file ? `/uploads/${req.file.filename}` : null;
-    if (avatar) {
-      db.prepare('UPDATE users SET name = COALESCE(?, name), avatar = ? WHERE id = ?').run(name || null, avatar, req.user.id);
-    } else {
-      db.prepare('UPDATE users SET name = COALESCE(?, name) WHERE id = ?').run(name || null, req.user.id);
-    }
-    const user = db.prepare('SELECT id, phone, name, avatar, invite_code, balance, withdraw_balance, total_recharge, total_withdraw, vip_level FROM users WHERE id = ?').get(req.user.id);
-    res.json({ success: true, user });
-  });
-
-  app.get('/api/user/purchases', auth, (req, res) => {
-    const purchases = db.prepare('SELECT up.*, ip.name FROM user_purchases up JOIN investment_plans ip ON up.plan_id = ip.id WHERE up.user_id = ? ORDER BY up.purchase_date DESC').all(req.user.id);
-    res.json(purchases);
-  });
-
-  app.get('/api/user/transactions', auth, (req, res) => {
-    const { type, page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
-    let query = 'SELECT * FROM transactions WHERE user_id = ?';
-    const params = [req.user.id];
-    if (type) { query += ' AND type = ?'; params.push(type); }
-    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), offset);
-    const transactions = db.prepare(query).all(...params);
-    res.json(transactions);
-  });
-
-  app.get('/api/user/commissions', auth, (req, res) => {
-    const commissions = db.prepare('SELECT c.*, u.phone FROM commissions c LEFT JOIN users u ON c.from_user_id = u.id WHERE c.user_id = ? ORDER BY c.created_at DESC LIMIT 50').all(req.user.id);
-    const total = db.prepare('SELECT COALESCE(SUM(amount), 0) as total FROM commissions WHERE user_id = ?').get(req.user.id);
-    res.json({ commissions, total: total.total });
-  });
-
-  app.get('/api/user/team', auth, (req, res) => {
-    const user = db.prepare('SELECT invite_code FROM users WHERE id = ?').get(req.user.id);
-    const team = db.prepare('SELECT id, phone, name, created_at, balance, vip_level FROM users WHERE invited_by = ? ORDER BY created_at DESC LIMIT 100').all(user.invite_code);
-    const totalComm = db.prepare('SELECT COALESCE(SUM(amount), 0) as total FROM commissions WHERE user_id = ?').get(req.user.id);
-    res.json({ team, team_count: team.length, total_commission: totalComm.total });
-  });
-
-  app.get('/api/user/bank-cards', auth, (req, res) => {
-    const cards = db.prepare('SELECT * FROM bank_cards WHERE user_id = ? ORDER BY is_default DESC, created_at DESC').all(req.user.id);
-    res.json(cards);
-  });
-
-  app.post('/api/user/bank-cards', auth, (req, res) => {
-    const { type, bank_name, account_name, account_number, ifsc, upi_id } = req.body;
-    const result = db.prepare('INSERT INTO bank_cards (user_id, type, bank_name, account_name, account_number, ifsc, upi_id) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(req.user.id, type || 'bank', bank_name || '', account_name || '', account_number || '', ifsc || '', upi_id || '');
-    res.json({ success: true, id: result.lastInsertRowid });
-  });
-
-  app.delete('/api/user/bank-cards/:id', auth, (req, res) => {
-    db.prepare('DELETE FROM bank_cards WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
-    res.json({ success: true });
-  });
-
-  // ===== PLANS =====
-  app.get('/api/plans', auth, (req, res) => {
-    const { category } = req.query;
-    let query = 'SELECT * FROM investment_plans WHERE is_active = 1';
-    if (category) query += ' AND category = ?';
-    query += ' ORDER BY price ASC';
-    const plans = db.prepare(query).all(...(category ? [category] : []));
-    res.json(plans);
-  });
-
-  app.post('/api/plans/purchase', auth, (req, res) => {
-    const { plan_id } = req.body;
-    const plan = db.prepare('SELECT * FROM investment_plans WHERE id = ? AND is_active = 1').get(plan_id);
-    if (!plan) return res.status(404).json({ error: 'Plan not found' });
-    
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-    if (user.balance < plan.price) return res.status(400).json({ error: 'Insufficient balance' });
-    
-    const expireDate = new Date(Date.now() + plan.cycle_days * 86400000).toISOString();
-    db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(plan.price, req.user.id);
-    
-    const purchase = db.prepare('INSERT INTO user_purchases (user_id, plan_id, expire_date, daily_income, total_income, days_remaining) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(req.user.id, plan.id, expireDate, plan.daily_income, plan.total_income, plan.cycle_days);
-    
-    db.prepare('INSERT INTO transactions (user_id, type, amount, description, balance_after) VALUES (?, ?, ?, ?, ?)')
-      .run(req.user.id, 'purchase', -plan.price, `Purchased ${plan.name}`, user.balance - plan.price);
-    
-    if (user.invited_by) {
-      const referrer = db.prepare('SELECT * FROM users WHERE invite_code = ?').get(user.invited_by);
-      if (referrer) {
-        const comm = plan.price * 0.1;
-        db.prepare('UPDATE users SET withdraw_balance = withdraw_balance + ? WHERE id = ?').run(comm, referrer.id);
-        db.prepare('INSERT INTO commissions (user_id, from_user_id, amount, type, description) VALUES (?, ?, ?, ?, ?)')
-          .run(referrer.id, req.user.id, comm, 'referral', `Commission from purchase`);
-      }
-    }
-    
-    res.json({ success: true, message: 'Plan purchased', purchase_id: purchase.lastInsertRowid });
-  });
-
-  // ===== DEPOSITS =====
-  app.post('/api/deposits', auth, upload.single('proof'), (req, res) => {
-    const { amount, payment_method, transaction_id } = req.body;
-    if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
-    
-    const minDep = parseFloat(db.prepare("SELECT value FROM settings WHERE key = 'min_deposit'").get()?.value || '100');
-    if (amount < minDep) return res.status(400).json({ error: `Min: ₹${minDep}` });
-    
-    const proof = req.file ? `/uploads/${req.file.filename}` : '';
-    db.prepare('INSERT INTO deposits (user_id, amount, payment_method, proof_image, transaction_id) VALUES (?, ?, ?, ?, ?)')
-      .run(req.user.id, parseFloat(amount), payment_method || 'UPI', proof, transaction_id || '');
-    
-    res.json({ success: true, message: 'Deposit submitted. Pending approval.' });
-  });
-
-  app.get('/api/deposits', auth, (req, res) => {
-    const deposits = db.prepare('SELECT * FROM deposits WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
-    res.json(deposits);
-  });
-
-// ===== WITHDRAWALS =====
-app.post('/api/withdrawals', auth, (req, res) => {
-  const { amount, bank_card_id, upi_id, account_number, ifsc, account_name } = req.body;
-
-  if (!amount || parseFloat(amount) <= 0) return res.status(400).json({ error: 'Invalid amount' });
-
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
-
-  const minWith = parseFloat(db.prepare("SELECT value FROM settings WHERE key = 'min_withdraw'").get()?.value || '100');
-  const amt = parseFloat(amount);
-
-  if (amt < minWith) return res.status(400).json({ error: `Min: ₹${minWith}` });
-  if (user.withdraw_balance < amt) return res.status(400).json({ error: 'Insufficient balance' });
-
-  let cardInfo = {
-    bank_name: '',
-    account_number: account_number || '',
-    account_name: account_name || '',
-    ifsc: ifsc || '',
-    upi_id: upi_id || ''
-  };
-
-  if (bank_card_id) {
-    const card = db.prepare('SELECT * FROM bank_cards WHERE id = ? AND user_id = ?').get(bank_card_id, req.user.id);
-    if (card) {
-      cardInfo = {
-        bank_name: card.bank_name,
-        account_number: card.account_number,
-        account_name: card.account_name,
-        ifsc: card.ifsc,
-        upi_id: card.upi_id
-      };
-    }
+    const token = jwt.sign({ id: newUser.id, phone, is_admin: 0 }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ success: true, token, user: { id: newUser.id, phone, invite_code: newCode } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  // Deduct withdraw balance immediately
-  db.prepare('UPDATE users SET withdraw_balance = withdraw_balance - ? WHERE id = ?').run(amt, req.user.id);
-
-  // Create withdrawal request (admin will see these details)
-  db.prepare(
-    `INSERT INTO withdrawals
-      (user_id, amount, bank_name, account_number, account_name, ifsc, upi_id, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`
-  ).run(
-    req.user.id,
-    amt,
-    cardInfo.bank_name || '',
-    cardInfo.account_number || '',
-    cardInfo.account_name || '',
-    cardInfo.ifsc || '',
-    cardInfo.upi_id || ''
-  );
-
-  // Ledger
-  db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)')
-    .run(req.user.id, 'withdraw', -amt, 'Withdrawal request');
-
-  res.json({ success: true, message: 'Withdrawal requested. Processing in 24 hours.' });
 });
 
-  app.get('/api/withdrawals', auth, (req, res) => {
-    const withdrawals = db.prepare('SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
-    res.json(withdrawals);
-  });
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+    const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
+    if (!user || !bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: 'Invalid credentials' });
+    if (user.is_banned) return res.status(403).json({ error: 'Account banned' });
 
-  app.post('/api/upload', auth, upload.single('file'), (req, res) => {
-    if (!req.file) return res.status(400).json({ error: 'No file' });
-    res.json({ url: `/uploads/${req.file.filename}` });
-  });
+    const token = jwt.sign({ id: user.id, phone, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ success: true, token, user: { id: user.id, phone, name: user.name, invite_code: user.invite_code, is_admin: user.is_admin } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  // ===== ADMIN =====
-  app.get('/api/admin/dashboard', adminAuth, (req, res) => {
-    const stats = {
-      total_users: db.prepare('SELECT COUNT(*) as count FROM users WHERE is_admin = 0').get().count,
-      total_deposits: db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'approved'").get().total,
-      total_withdrawals: db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM withdrawals WHERE status = 'approved'").get().total,
-      total_plans_sold: db.prepare('SELECT COUNT(*) as count FROM user_purchases').get().count,
-      pending_deposits: db.prepare("SELECT COUNT(*) as count FROM deposits WHERE status = 'pending'").get().count,
-      pending_withdrawals: db.prepare("SELECT COUNT(*) as count FROM withdrawals WHERE status = 'pending'").get().count,
-    };
-    const recent_users = db.prepare('SELECT id, phone, name, balance, created_at FROM users WHERE is_admin = 0 ORDER BY created_at DESC LIMIT 10').all();
-    const recent_deposits = db.prepare('SELECT d.*, u.phone FROM deposits d JOIN users u ON d.user_id = u.id WHERE d.status = "pending" ORDER BY d.created_at DESC LIMIT 10').all();
-    res.json({ stats, recent_users, recent_deposits });
-  });
+// ===== USER ROUTES =====
+app.get('/api/user/profile', auth, async (req, res) => {
+  try {
+    const { data: user } = await supabase.from('users')
+      .select('id, phone, name, avatar, invite_code, balance, withdraw_balance, total_recharge, total_withdraw, vip_level, created_at')
+      .eq('id', req.user.id).single();
+    const { count: team_count } = await supabase.from('users').select('id', { count: 'exact', head: true }).eq('invited_by', user.invite_code);
+    const { data: earned } = await supabase.from('commissions').select('amount').eq('user_id', req.user.id);
+    const total_earned = earned?.reduce((s, r) => s + r.amount, 0) || 0;
+    res.json({ ...user, team_count: team_count || 0, total_earned });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.get('/api/admin/users', adminAuth, (req, res) => {
+app.put('/api/user/profile', auth, upload.single('avatar'), async (req, res) => {
+  try {
+    const { name } = req.body;
+    const updates = {};
+    if (name) updates.name = name;
+    if (req.file) updates.avatar = `/uploads/${req.file.filename}`;
+    await supabase.from('users').update(updates).eq('id', req.user.id);
+    const { data: user } = await supabase.from('users')
+      .select('id, phone, name, avatar, invite_code, balance, withdraw_balance, total_recharge, total_withdraw, vip_level')
+      .eq('id', req.user.id).single();
+    res.json({ success: true, user });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/user/purchases', auth, async (req, res) => {
+  try {
+    const { data } = await supabase.from('user_purchases')
+      .select('*, investment_plans(name)').eq('user_id', req.user.id).order('purchase_date', { ascending: false });
+    const purchases = data?.map(p => ({ ...p, name: p.investment_plans?.name })) || [];
+    res.json(purchases);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/user/transactions', auth, async (req, res) => {
+  try {
+    const { type, page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+    let query = supabase.from('transactions').select('*').eq('user_id', req.user.id).order('created_at', { ascending: false }).range(offset, offset + parseInt(limit) - 1);
+    if (type) query = query.eq('type', type);
+    const { data } = await query;
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/user/commissions', auth, async (req, res) => {
+  try {
+    const { data: commissions } = await supabase.from('commissions')
+      .select('*').eq('user_id', req.user.id).order('created_at', { ascending: false }).limit(50);
+    const total = commissions?.reduce((s, c) => s + c.amount, 0) || 0;
+    res.json({ commissions: commissions || [], total });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/user/team', auth, async (req, res) => {
+  try {
+    const { data: user } = await supabase.from('users').select('invite_code').eq('id', req.user.id).single();
+    const { data: team } = await supabase.from('users')
+      .select('id, phone, name, created_at, balance, vip_level').eq('invited_by', user.invite_code).order('created_at', { ascending: false }).limit(100);
+    const { data: commData } = await supabase.from('commissions').select('amount').eq('user_id', req.user.id);
+    const total_commission = commData?.reduce((s, c) => s + c.amount, 0) || 0;
+    res.json({ team: team || [], team_count: team?.length || 0, total_commission });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/user/bank-cards', auth, async (req, res) => {
+  try {
+    const { data } = await supabase.from('bank_cards').select('*').eq('user_id', req.user.id).order('is_default', { ascending: false });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/user/bank-cards', auth, async (req, res) => {
+  try {
+    const { type, bank_name, account_name, account_number, ifsc, upi_id } = req.body;
+    const { data, error } = await supabase.from('bank_cards')
+      .insert({ user_id: req.user.id, type: type || 'bank', bank_name: bank_name || '', account_name: account_name || '', account_number: account_number || '', ifsc: ifsc || '', upi_id: upi_id || '' })
+      .select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ success: true, id: data.id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/user/bank-cards/:id', auth, async (req, res) => {
+  try {
+    await supabase.from('bank_cards').delete().eq('id', req.params.id).eq('user_id', req.user.id);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== PLANS =====
+app.get('/api/plans', auth, async (req, res) => {
+  try {
+    const { category } = req.query;
+    let query = supabase.from('investment_plans').select('*').eq('is_active', 1).order('price');
+    if (category) query = query.eq('category', category);
+    const { data } = await query;
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/plans/purchase', auth, async (req, res) => {
+  try {
+    const { plan_id } = req.body;
+    const { data: plan } = await supabase.from('investment_plans').select('*').eq('id', plan_id).eq('is_active', 1).single();
+    if (!plan) return res.status(404).json({ error: 'Plan not found' });
+
+    const { data: user } = await supabase.from('users').select('*').eq('id', req.user.id).single();
+    if (user.balance < plan.price) return res.status(400).json({ error: 'Insufficient balance' });
+
+    const expireDate = new Date(Date.now() + plan.cycle_days * 86400000).toISOString();
+    await supabase.from('users').update({ balance: user.balance - plan.price }).eq('id', req.user.id);
+
+    const { data: purchase } = await supabase.from('user_purchases')
+      .insert({ user_id: req.user.id, plan_id: plan.id, expire_date: expireDate, daily_income: plan.daily_income, total_income: plan.total_income, days_remaining: plan.cycle_days })
+      .select().single();
+
+    await supabase.from('transactions').insert({ user_id: req.user.id, type: 'purchase', amount: -plan.price, description: `Purchased ${plan.name}`, balance_after: user.balance - plan.price });
+
+    if (user.invited_by) {
+      const { data: referrer } = await supabase.from('users').select('*').eq('invite_code', user.invited_by).single();
+      if (referrer) {
+        const comm = plan.price * 0.1;
+        await supabase.from('users').update({ withdraw_balance: referrer.withdraw_balance + comm }).eq('id', referrer.id);
+        await supabase.from('commissions').insert({ user_id: referrer.id, from_user_id: req.user.id, amount: comm, type: 'referral', description: 'Commission from purchase' });
+      }
+    }
+
+    res.json({ success: true, message: 'Plan purchased', purchase_id: purchase.id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== DEPOSITS =====
+app.post('/api/deposits', auth, upload.single('proof'), async (req, res) => {
+  try {
+    const { amount, payment_method, transaction_id } = req.body;
+    if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
+
+    const { data: minSetting } = await supabase.from('settings').select('value').eq('key', 'min_deposit').single();
+    const minDep = parseFloat(minSetting?.value || '100');
+    if (parseFloat(amount) < minDep) return res.status(400).json({ error: `Min: Rs.${minDep}` });
+
+    const proof = req.file ? `/uploads/${req.file.filename}` : '';
+    await supabase.from('deposits').insert({ user_id: req.user.id, amount: parseFloat(amount), payment_method: payment_method || 'UPI', proof_image: proof, transaction_id: transaction_id || '' });
+
+    res.json({ success: true, message: 'Deposit submitted. Pending approval.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/deposits', auth, async (req, res) => {
+  try {
+    const { data } = await supabase.from('deposits').select('*').eq('user_id', req.user.id).order('created_at', { ascending: false });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== WITHDRAWALS =====
+app.post('/api/withdrawals', auth, async (req, res) => {
+  try {
+    const { amount, bank_card_id, upi_id, account_number, ifsc, account_name } = req.body;
+    if (!amount || parseFloat(amount) <= 0) return res.status(400).json({ error: 'Invalid amount' });
+
+    const { data: user } = await supabase.from('users').select('*').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const { data: minSetting } = await supabase.from('settings').select('value').eq('key', 'min_withdraw').single();
+    const minWith = parseFloat(minSetting?.value || '100');
+    const amt = parseFloat(amount);
+
+    if (amt < minWith) return res.status(400).json({ error: `Min: Rs.${minWith}` });
+    if (user.withdraw_balance < amt) return res.status(400).json({ error: 'Insufficient balance' });
+
+    let cardInfo = { bank_name: '', account_number: account_number || '', account_name: account_name || '', ifsc: ifsc || '', upi_id: upi_id || '' };
+
+    if (bank_card_id) {
+      const { data: card } = await supabase.from('bank_cards').select('*').eq('id', bank_card_id).eq('user_id', req.user.id).single();
+      if (card) cardInfo = { bank_name: card.bank_name, account_number: card.account_number, account_name: card.account_name, ifsc: card.ifsc, upi_id: card.upi_id };
+    }
+
+    await supabase.from('users').update({ withdraw_balance: user.withdraw_balance - amt }).eq('id', req.user.id);
+    await supabase.from('withdrawals').insert({ user_id: req.user.id, amount: amt, ...cardInfo, status: 'pending' });
+    await supabase.from('transactions').insert({ user_id: req.user.id, type: 'withdraw', amount: -amt, description: 'Withdrawal request' });
+
+    res.json({ success: true, message: 'Withdrawal requested. Processing in 24 hours.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ✅ WITHDRAWAL HISTORY - User apni withdrawal history dekh sakta hai
+app.get('/api/withdrawals', auth, async (req, res) => {
+  try {
+    const { data } = await supabase.from('withdrawals').select('*').eq('user_id', req.user.id).order('created_at', { ascending: false });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/upload', auth, upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  res.json({ url: `/uploads/${req.file.filename}` });
+});
+
+// ===== ADMIN =====
+app.get('/api/admin/dashboard', adminAuth, async (req, res) => {
+  try {
+    const [users, deps, withs, plans, pendDep, pendWith, recentUsers, recentDeps] = await Promise.all([
+      supabase.from('users').select('id', { count: 'exact', head: true }).eq('is_admin', 0),
+      supabase.from('deposits').select('amount').eq('status', 'approved'),
+      supabase.from('withdrawals').select('amount').eq('status', 'approved'),
+      supabase.from('user_purchases').select('id', { count: 'exact', head: true }),
+      supabase.from('deposits').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('withdrawals').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('users').select('id, phone, name, balance, created_at').eq('is_admin', 0).order('created_at', { ascending: false }).limit(10),
+      supabase.from('deposits').select('*, users(phone)').eq('status', 'pending').order('created_at', { ascending: false }).limit(10),
+    ]);
+    res.json({
+      stats: {
+        total_users: users.count || 0,
+        total_deposits: deps.data?.reduce((s, d) => s + d.amount, 0) || 0,
+        total_withdrawals: withs.data?.reduce((s, w) => s + w.amount, 0) || 0,
+        total_plans_sold: plans.count || 0,
+        pending_deposits: pendDep.count || 0,
+        pending_withdrawals: pendWith.count || 0,
+      },
+      recent_users: recentUsers.data || [],
+      recent_deposits: recentDeps.data?.map(d => ({ ...d, phone: d.users?.phone })) || [],
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/admin/users', adminAuth, async (req, res) => {
+  try {
     const { search, page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
-    let query = 'SELECT id, phone, name, balance, withdraw_balance, total_recharge, invite_code, vip_level, is_banned, created_at FROM users WHERE is_admin = 0';
-    const params = [];
-    if (search) { query += ' AND (phone LIKE ? OR name LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
-    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), offset);
-    const users = db.prepare(query).all(...params);
-    const total = db.prepare('SELECT COUNT(*) as count FROM users WHERE is_admin = 0').get().count;
-    res.json({ users, total });
-  });
+    let query = supabase.from('users').select('id, phone, name, balance, withdraw_balance, total_recharge, invite_code, vip_level, is_banned, created_at', { count: 'exact' })
+      .eq('is_admin', 0).order('created_at', { ascending: false }).range(offset, offset + parseInt(limit) - 1);
+    if (search) query = query.or(`phone.ilike.%${search}%,name.ilike.%${search}%`);
+    const { data, count } = await query;
+    res.json({ users: data || [], total: count || 0 });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.put('/api/admin/users/:id', adminAuth, (req, res) => {
+app.put('/api/admin/users/:id', adminAuth, async (req, res) => {
+  try {
     const { name, balance, withdraw_balance, vip_level, is_banned } = req.body;
-    db.prepare('UPDATE users SET name = COALESCE(?, name), balance = COALESCE(?, balance), withdraw_balance = COALESCE(?, withdraw_balance), vip_level = COALESCE(?, vip_level), is_banned = COALESCE(?, is_banned) WHERE id = ?')
-      .run(name, balance !== undefined ? balance : null, withdraw_balance !== undefined ? withdraw_balance : null, vip_level, is_banned, req.params.id);
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (balance !== undefined) updates.balance = balance;
+    if (withdraw_balance !== undefined) updates.withdraw_balance = withdraw_balance;
+    if (vip_level !== undefined) updates.vip_level = vip_level;
+    if (is_banned !== undefined) updates.is_banned = is_banned;
+    await supabase.from('users').update(updates).eq('id', req.params.id);
     res.json({ success: true });
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.delete('/api/admin/users/:id', adminAuth, (req, res) => {
-    db.prepare('DELETE FROM users WHERE id = ? AND is_admin = 0').run(req.params.id);
+app.delete('/api/admin/users/:id', adminAuth, async (req, res) => {
+  try {
+    await supabase.from('users').delete().eq('id', req.params.id).eq('is_admin', 0);
     res.json({ success: true });
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  // Plans CRUD
-  app.get('/api/admin/plans', adminAuth, (req, res) => {
-    const plans = db.prepare('SELECT * FROM investment_plans ORDER BY category, price ASC').all();
-    res.json(plans);
-  });
+app.get('/api/admin/plans', adminAuth, async (req, res) => {
+  try {
+    const { data } = await supabase.from('investment_plans').select('*').order('category').order('price');
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.post('/api/admin/plans', adminAuth, upload.single('image'), (req, res) => {
+app.post('/api/admin/plans', adminAuth, upload.single('image'), async (req, res) => {
+  try {
     const { name, price, total_income, cycle_days, daily_income, category, description } = req.body;
     const img = req.file ? `/uploads/${req.file.filename}` : '';
-    const result = db.prepare('INSERT INTO investment_plans (name, price, total_income, cycle_days, daily_income, category, image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(name, parseFloat(price), parseFloat(total_income), parseInt(cycle_days), parseFloat(daily_income), category || 'vip', img, description || '');
-    res.json({ success: true, id: result.lastInsertRowid });
-  });
+    const { data, error } = await supabase.from('investment_plans')
+      .insert({ name, price: parseFloat(price), total_income: parseFloat(total_income), cycle_days: parseInt(cycle_days), daily_income: parseFloat(daily_income), category: category || 'vip', image_url: img, description: description || '' })
+      .select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ success: true, id: data.id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.put('/api/admin/plans/:id', adminAuth, upload.single('image'), (req, res) => {
+app.put('/api/admin/plans/:id', adminAuth, upload.single('image'), async (req, res) => {
+  try {
     const { name, price, total_income, cycle_days, daily_income, category, description, is_active } = req.body;
-    const img = req.file ? `/uploads/${req.file.filename}` : null;
-    if (img) {
-      db.prepare('UPDATE investment_plans SET name = ?, price = ?, total_income = ?, cycle_days = ?, daily_income = ?, category = ?, description = ?, is_active = ?, image_url = ? WHERE id = ?')
-        .run(name, parseFloat(price), parseFloat(total_income), parseInt(cycle_days), parseFloat(daily_income), category, description || '', is_active || 1, img, req.params.id);
-    } else {
-      db.prepare('UPDATE investment_plans SET name = ?, price = ?, total_income = ?, cycle_days = ?, daily_income = ?, category = ?, description = ?, is_active = ? WHERE id = ?')
-        .run(name, parseFloat(price), parseFloat(total_income), parseInt(cycle_days), parseFloat(daily_income), category, description || '', is_active || 1, req.params.id);
-    }
+    const updates = { name, price: parseFloat(price), total_income: parseFloat(total_income), cycle_days: parseInt(cycle_days), daily_income: parseFloat(daily_income), category, description: description || '', is_active: is_active !== undefined ? is_active : 1 };
+    if (req.file) updates.image_url = `/uploads/${req.file.filename}`;
+    await supabase.from('investment_plans').update(updates).eq('id', req.params.id);
     res.json({ success: true });
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.delete('/api/admin/plans/:id', adminAuth, (req, res) => {
-    db.prepare('DELETE FROM investment_plans WHERE id = ?').run(req.params.id);
+app.delete('/api/admin/plans/:id', adminAuth, async (req, res) => {
+  try {
+    await supabase.from('investment_plans').delete().eq('id', req.params.id);
     res.json({ success: true });
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  // Deposits
-  app.get('/api/admin/deposits', adminAuth, (req, res) => {
+app.get('/api/admin/deposits', adminAuth, async (req, res) => {
+  try {
     const { status, page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
-    let query = 'SELECT d.*, u.phone, u.name FROM deposits d JOIN users u ON d.user_id = u.id';
-    const params = [];
-    if (status) { query += ' WHERE d.status = ?'; params.push(status); }
-    query += ' ORDER BY d.created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), offset);
-    const deposits = db.prepare(query).all(...params);
-    const total = db.prepare('SELECT COUNT(*) as count FROM deposits').get().count;
-    res.json({ deposits, total });
-  });
+    let query = supabase.from('deposits').select('*, users(phone, name)', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + parseInt(limit) - 1);
+    if (status) query = query.eq('status', status);
+    const { data, count } = await query;
+    res.json({ deposits: data?.map(d => ({ ...d, phone: d.users?.phone, name: d.users?.name })) || [], total: count || 0 });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.put('/api/admin/deposits/:id/approve', adminAuth, (req, res) => {
-    const deposit = db.prepare('SELECT * FROM deposits WHERE id = ?').get(req.params.id);
+app.put('/api/admin/deposits/:id/approve', adminAuth, async (req, res) => {
+  try {
+    const { data: deposit } = await supabase.from('deposits').select('*').eq('id', req.params.id).single();
     if (!deposit || deposit.status !== 'pending') return res.status(400).json({ error: 'Invalid' });
-    db.prepare("UPDATE deposits SET status = 'approved', approved_at = CURRENT_TIMESTAMP WHERE id = ?").run(req.params.id);
-    db.prepare('UPDATE users SET balance = balance + ?, total_recharge = total_recharge + ? WHERE id = ?').run(deposit.amount, deposit.amount, deposit.user_id);
-    db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(deposit.user_id, 'deposit', deposit.amount, 'Deposit approved');
+    await supabase.from('deposits').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', req.params.id);
+    const { data: user } = await supabase.from('users').select('balance, total_recharge').eq('id', deposit.user_id).single();
+    await supabase.from('users').update({ balance: user.balance + deposit.amount, total_recharge: user.total_recharge + deposit.amount }).eq('id', deposit.user_id);
+    await supabase.from('transactions').insert({ user_id: deposit.user_id, type: 'deposit', amount: deposit.amount, description: 'Deposit approved' });
     res.json({ success: true });
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.put('/api/admin/deposits/:id/reject', adminAuth, (req, res) => {
+app.put('/api/admin/deposits/:id/reject', adminAuth, async (req, res) => {
+  try {
     const { note } = req.body;
-    db.prepare("UPDATE deposits SET status = 'rejected', note = ? WHERE id = ?").run(note || 'Rejected', req.params.id);
+    await supabase.from('deposits').update({ status: 'rejected', note: note || 'Rejected' }).eq('id', req.params.id);
     res.json({ success: true });
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  // Withdrawals
-  app.get('/api/admin/withdrawals', adminAuth, (req, res) => {
+app.get('/api/admin/withdrawals', adminAuth, async (req, res) => {
+  try {
     const { status, page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
-    let query = 'SELECT w.*, u.phone, u.name FROM withdrawals w JOIN users u ON w.user_id = u.id';
-    const params = [];
-    if (status) { query += ' WHERE w.status = ?'; params.push(status); }
-    query += ' ORDER BY w.created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), offset);
-    const withdrawals = db.prepare(query).all(...params);
-    const total = db.prepare('SELECT COUNT(*) as count FROM withdrawals').get().count;
-    res.json({ withdrawals, total });
-  });
+    let query = supabase.from('withdrawals').select('*, users(phone, name)', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + parseInt(limit) - 1);
+    if (status) query = query.eq('status', status);
+    const { data, count } = await query;
+    res.json({ withdrawals: data?.map(w => ({ ...w, phone: w.users?.phone, name: w.users?.name })) || [], total: count || 0 });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.put('/api/admin/withdrawals/:id/approve', adminAuth, (req, res) => {
-    const withdrawal = db.prepare('SELECT * FROM withdrawals WHERE id = ?').get(req.params.id);
+app.put('/api/admin/withdrawals/:id/approve', adminAuth, async (req, res) => {
+  try {
+    const { data: withdrawal } = await supabase.from('withdrawals').select('*').eq('id', req.params.id).single();
     if (!withdrawal || withdrawal.status !== 'pending') return res.status(400).json({ error: 'Invalid' });
-    db.prepare("UPDATE withdrawals SET status = 'approved', approved_at = CURRENT_TIMESTAMP WHERE id = ?").run(req.params.id);
-    db.prepare('UPDATE users SET total_withdraw = total_withdraw + ? WHERE id = ?').run(withdrawal.amount, withdrawal.user_id);
-    db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(withdrawal.user_id, 'withdraw_approved', withdrawal.amount, 'Withdrawal approved');
+    await supabase.from('withdrawals').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', req.params.id);
+    const { data: user } = await supabase.from('users').select('total_withdraw').eq('id', withdrawal.user_id).single();
+    await supabase.from('users').update({ total_withdraw: user.total_withdraw + withdrawal.amount }).eq('id', withdrawal.user_id);
+    await supabase.from('transactions').insert({ user_id: withdrawal.user_id, type: 'withdraw_approved', amount: withdrawal.amount, description: 'Withdrawal approved' });
     res.json({ success: true });
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.put('/api/admin/withdrawals/:id/reject', adminAuth, (req, res) => {
+app.put('/api/admin/withdrawals/:id/reject', adminAuth, async (req, res) => {
+  try {
     const { note } = req.body;
-    const withdrawal = db.prepare('SELECT * FROM withdrawals WHERE id = ?').get(req.params.id);
+    const { data: withdrawal } = await supabase.from('withdrawals').select('*').eq('id', req.params.id).single();
     if (!withdrawal || withdrawal.status !== 'pending') return res.status(400).json({ error: 'Invalid' });
-    db.prepare("UPDATE withdrawals SET status = 'rejected', note = ? WHERE id = ?").run(note || 'Rejected', req.params.id);
-    db.prepare('UPDATE users SET withdraw_balance = withdraw_balance + ? WHERE id = ?').run(withdrawal.amount, withdrawal.user_id);
+    await supabase.from('withdrawals').update({ status: 'rejected', note: note || 'Rejected' }).eq('id', req.params.id);
+    const { data: user } = await supabase.from('users').select('withdraw_balance').eq('id', withdrawal.user_id).single();
+    await supabase.from('users').update({ withdraw_balance: user.withdraw_balance + withdrawal.amount }).eq('id', withdrawal.user_id);
     res.json({ success: true });
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  // Settings
-  app.get('/api/admin/settings', adminAuth, (req, res) => {
-    const settings = db.prepare('SELECT * FROM settings').all();
+app.get('/api/admin/settings', adminAuth, async (req, res) => {
+  try {
+    const { data } = await supabase.from('settings').select('*');
     const obj = {};
-    settings.forEach(s => obj[s.key] = s.value);
+    data?.forEach(s => obj[s.key] = s.value);
     res.json(obj);
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-  app.put('/api/admin/settings', adminAuth, upload.single('logo'), (req, res) => {
+app.put('/api/admin/settings', adminAuth, upload.single('logo'), async (req, res) => {
+  try {
     const data = req.body;
     if (req.file) data.site_logo = `/uploads/${req.file.filename}`;
     for (const [key, value] of Object.entries(data)) {
-      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value);
+      await supabase.from('settings').upsert({ key, value });
     }
     res.json({ success: true });
-  });
-
-  // Public settings
-  app.get('/api/settings', (req, res) => {
-    const settings = db.prepare("SELECT key, value FROM settings").all();
-    const obj = {};
-    settings.forEach(s => obj[s.key] = s.value);
-    res.json(obj);
-  });
-
-  // Generate QR Code for UPI
-  app.post('/api/generate-qr', adminAuth, async (req, res) => {
-    const { upi_id, amount } = req.body;
-    if (!upi_id) return res.status(400).json({ error: 'UPI ID required' });
-    try {
-      const upiString = `upi://pay?pa=${upi_id}&pn=GreenPower${amount ? '&am=' + amount : ''}`;
-      const qrCode = await QRCode.toDataURL(upiString);
-      res.json({ success: true, qr: qrCode, upiString });
-    } catch (e) {
-      res.status(400).json({ error: 'QR generation failed' });
-    }
-  });
-
-  // Get payment QR (for checkout)
-  app.get('/api/payment-qr/:amount', async (req, res) => {
-    try {
-      const upiId = db.prepare("SELECT value FROM settings WHERE key = 'upi_id'").get()?.value || 'greenpower@upi';
-      const amount = req.params.amount;
-      const upiString = `upi://pay?pa=${upiId}&pn=GreenPower&am=${amount}`;
-      const qrCode = await QRCode.toDataURL(upiString);
-      res.json({ success: true, qr: qrCode, upiId, amount });
-    } catch (e) {
-      res.status(400).json({ error: 'QR generation failed' });
-    }
-  });
-
-  // Daily earnings
-  const calculateEarnings = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const active = db.prepare("SELECT up.*, u.id as uid FROM user_purchases up JOIN users u ON up.user_id = u.id WHERE up.status = 'active' AND up.earned_income < up.total_income").all();
-    for (const p of active) {
-      const paid = db.prepare("SELECT id FROM transactions WHERE user_id = ? AND type = 'earning' AND DATE(created_at) = ?").get(p.uid, today);
-      if (!paid) {
-        const newEarned = Math.min(p.earned_income + p.daily_income, p.total_income);
-        db.prepare('UPDATE users SET withdraw_balance = withdraw_balance + ? WHERE id = ?').run(p.daily_income, p.uid);
-        db.prepare('UPDATE user_purchases SET earned_income = ?, days_remaining = days_remaining - 1, status = ? WHERE id = ?')
-          .run(newEarned, newEarned >= p.total_income ? 'completed' : 'active', p.id);
-        db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(p.uid, 'earning', p.daily_income, 'Daily earning');
-      }
-    }
-  };
-
-  setInterval(calculateEarnings, 3600000);
-  calculateEarnings();
-
-  // Save DB on exit
-  process.on('SIGINT', () => {
-    try {
-      const data = db.export();
-      fs.writeFileSync(DB_FILE, Buffer.from(data));
-      console.log('\n💾 Database saved!');
-    } catch (e) {}
-    process.exit(0);
-  });
-
-// ✅ Single app.listen at the end
-
-app.listen(PORT, '0.0.0.0', () => {
-
-  console.log(`✅ Green Power Server Running on port ${PORT}`);
-
-  console.log(`📱 User App Running`);
-
-  console.log(`⚙️ Admin Panel Ready`);
-
-  console.log(`🔐 Admin Login: phone=admin | password=admin123`);
-
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// initDatabase removed (server DB init runs inside initSqlJs().then(...))
+app.get('/api/settings', async (req, res) => {
+  try {
+    const { data } = await supabase.from('settings').select('key, value');
+    const obj = {};
+    data?.forEach(s => obj[s.key] = s.value);
+    res.json(obj);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/generate-qr', adminAuth, async (req, res) => {
+  const { upi_id, amount } = req.body;
+  if (!upi_id) return res.status(400).json({ error: 'UPI ID required' });
+  try {
+    const upiString = `upi://pay?pa=${upi_id}&pn=GreenPower${amount ? '&am=' + amount : ''}`;
+    const qrCode = await QRCode.toDataURL(upiString);
+    res.json({ success: true, qr: qrCode, upiString });
+  } catch (e) {
+    res.status(400).json({ error: 'QR generation failed' });
+  }
+});
+
+app.get('/api/payment-qr/:amount', async (req, res) => {
+  try {
+    const { data } = await supabase.from('settings').select('value').eq('key', 'upi_id').single();
+    const upiId = data?.value || 'greenpower@upi';
+    const amount = req.params.amount;
+    const upiString = `upi://pay?pa=${upiId}&pn=GreenPower&am=${amount}`;
+    const qrCode = await QRCode.toDataURL(upiString);
+    res.json({ success: true, qr: qrCode, upiId, amount });
+  } catch (e) {
+    res.status(400).json({ error: 'QR generation failed' });
+  }
+});
+
+// Daily earnings calculator
+const calculateEarnings = async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const { data: active } = await supabase.from('user_purchases')
+      .select('*, users(id, withdraw_balance)').eq('status', 'active');
+
+    for (const p of (active || [])) {
+      if ((p.earned_income || 0) >= p.total_income) continue;
+      const { data: paid } = await supabase.from('transactions')
+        .select('id').eq('user_id', p.user_id).eq('type', 'earning').gte('created_at', today).maybeSingle();
+      if (!paid) {
+        const newEarned = Math.min((p.earned_income || 0) + p.daily_income, p.total_income);
+        const newStatus = newEarned >= p.total_income ? 'completed' : 'active';
+        const currentBalance = p.users?.withdraw_balance || 0;
+        await supabase.from('users').update({ withdraw_balance: currentBalance + p.daily_income }).eq('id', p.user_id);
+        await supabase.from('user_purchases').update({ earned_income: newEarned, days_remaining: Math.max((p.days_remaining || 1) - 1, 0), status: newStatus }).eq('id', p.id);
+        await supabase.from('transactions').insert({ user_id: p.user_id, type: 'earning', amount: p.daily_income, description: 'Daily earning' });
+      }
+    }
+  } catch (e) {
+    console.error('Earnings calc error:', e.message);
+  }
+};
+
+setInterval(calculateEarnings, 3600000);
+calculateEarnings();
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Green Power Server Running on port ${PORT}`);
+  console.log(`📱 Supabase Connected`);
+  console.log(`⚙️ Admin Panel Ready`);
 });
