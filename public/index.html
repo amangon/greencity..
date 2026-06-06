@@ -2,375 +2,440 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <title>Green Power | Your Financial Expert</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green Power | Financial Expert</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    :root { --primary: #00BCD4; --dark: #0097A7; --light: #E8F4F8; --card: #fff; --text: #2C3E50; --light-text: #7F8C8D; --success: #27AE60; --danger: #E74C3C; }
-    body { background: var(--light); margin: 0; padding: 0; overflow: hidden; }
-    .page { display: none; }
-    .page.active { display: block; }
-    .hidden { display: none !important; }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Nunito',sans-serif;}
+    :root{
+      --primary:#00C853;--primary-dark:#00963d;--accent:#00E676;
+      --bg:#0D1117;--card:#161B22;--card2:#1C2330;
+      --text:#E6EDF3;--muted:#7D8590;--border:#30363D;
+      --danger:#FF4D4D;--warn:#F0A500;--success:#00C853;
+      --grad:linear-gradient(135deg,#00C853,#00963d);
+    }
+    body{background:var(--bg);color:var(--text);overflow:hidden;}
+    .hidden{display:none!important;}
+    .page{display:none;}
+    .page.active{display:block;animation:fadeUp 200ms ease;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-    /* Login Page */
-    #page-login { position: fixed; width: 100%; height: 100vh; top: 0; left: 0; background: linear-gradient(135deg, var(--primary), var(--dark)); display: none; align-items: center; justify-content: center; z: 1000; }
-    #page-login.active { display: flex; }
-    .login-container { width: 90%; max-width: 400px; }
-    .login-header { text-align: center; color: white; margin-bottom: 30px; }
-    .login-header h1 { font-size: 32px; margin-bottom: 5px; }
-    .login-header .tagline { font-size: 14px; opacity: 0.9; }
-    .login-tabs { display: flex; gap: 0; margin-bottom: 20px; }
-    .login-tabs button { flex: 1; padding: 12px; border: none; background: rgba(255,255,255,0.2); color: white; font-size: 16px; cursor: pointer; transition: all 0.3s; border-radius: 5px 0 0 0; }
-    .login-tabs button.active { background: white; color: var(--dark); }
-    .login-form { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; color: var(--text); font-size: 14px; font-weight: 500; }
-    .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; transition: border 0.3s; }
-    .form-group input:focus { outline: none; border-color: var(--primary); }
-    .form-group.checkbox { display: flex; align-items: center; }
-    .form-group.checkbox input { width: auto; margin-right: 8px; }
-    .login-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--primary), var(--dark)); color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-    .login-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
-    .error-msg { background: #ffe6e6; color: var(--danger); padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 13px; }
-    .success-msg { background: #e6ffe6; color: var(--success); padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 13px; }
+    /* TOAST */
+    .toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#23272e;color:#fff;padding:10px 18px;border-radius:50px;font-size:13px;font-weight:600;z-index:9999;display:none;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.5);}
+    .toast.show{display:block;animation:fadeUp 180ms ease;}
 
-    /* Main App */
-    #app { position: fixed; width: 100%; height: 100vh; top: 0; left: 0; overflow: hidden; }
-    .app-container { height: calc(100vh - 60px); overflow-y: auto; padding-bottom: 60px; }
-    .page { height: auto; }
-    #page-checkout { position: fixed; inset: 0; z-index: 1200; background: var(--light); overflow-y: auto; padding: 10px 0 30px; }
+    /* ===== LOGIN ===== */
+    #page-login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:2000;overflow-y:auto;}
+    #page-login.active{display:flex;}
+    .login-wrap{width:92%;max-width:400px;padding:20px 0;}
+    .login-logo{text-align:center;margin-bottom:28px;}
+    .login-logo .logo-icon{width:72px;height:72px;background:var(--grad);border-radius:20px;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:10px;box-shadow:0 8px 24px rgba(0,200,83,.3);}
+    .login-logo h1{font-size:26px;font-weight:900;color:var(--text);}
+    .login-logo p{font-size:13px;color:var(--muted);}
+    .login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
+    .login-tabs{display:flex;gap:8px;margin-bottom:20px;}
+    .login-tabs button{flex:1;padding:10px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+    .login-tabs button.active{background:var(--grad);color:#fff;border-color:transparent;}
+    .fg{margin-bottom:14px;}
+    .fg label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+    .fg input,.fg select{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border .2s;}
+    .fg input:focus,.fg select:focus{border-color:var(--primary);}
+    .fg.check{display:flex;align-items:center;gap:8px;}
+    .fg.check input{width:auto;}
+    .fg.check label{font-size:13px;text-transform:none;letter-spacing:0;margin:0;color:var(--muted);}
+    .btn-login{width:100%;padding:13px;background:var(--grad);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px;letter-spacing:.3px;box-shadow:0 4px 16px rgba(0,200,83,.3);}
+    .btn-login:hover{opacity:.9;}
+    .err-msg{background:rgba(255,77,77,.12);color:var(--danger);border:1px solid rgba(255,77,77,.3);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;}
+    .ok-msg{background:rgba(0,200,83,.12);color:var(--success);border:1px solid rgba(0,200,83,.3);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;}
+    .switch-link{text-align:center;margin-top:14px;font-size:13px;color:var(--muted);}
+    .switch-link a{color:var(--primary);text-decoration:none;font-weight:700;}
 
-    /* Hero Banner */
-    .hero { background: linear-gradient(135deg, var(--primary), var(--dark)); color: white; padding: 20px; border-radius: 15px; margin: 15px; text-align: center; }
-    .hero h2 { font-size: 20px; margin-bottom: 5px; }
-    .hero p { font-size: 12px; opacity: 0.9; }
+    /* ===== APP ===== */
+    #app{position:fixed;inset:0;}
+    .app-body{height:calc(100vh - 62px);overflow-y:auto;padding-bottom:20px;}
+    #page-checkout{position:fixed;inset:0;z-index:1200;background:var(--bg);overflow-y:auto;}
 
-    /* Card */
-    .card { background: var(--card); margin: 10px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-    .card-title { font-size: 14px; color: var(--text); font-weight: 600; margin-bottom: 5px; }
-    .card-value { font-size: 24px; color: var(--primary); font-weight: 700; }
-    .card-desc { font-size: 12px; color: var(--light-text); }
+    /* HEADER */
+    .top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:var(--card);border-bottom:1px solid var(--border);}
+    .top-bar .brand{font-size:18px;font-weight:900;color:var(--text);}
+    .top-bar .brand span{color:var(--primary);}
+    .top-bar .notif{width:36px;height:36px;background:var(--card2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);border:1px solid var(--border);}
 
-    /* Tabs */
-    .tabs { display: flex; gap: 10px; padding: 10px 15px; overflow-x: auto; background: white; border-bottom: 1px solid #eee; }
-    .tabs button { padding: 10px 20px; border: none; background: transparent; color: var(--light-text); cursor: pointer; font-size: 14px; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.3s; }
-    .tabs button.active { color: var(--primary); border-bottom-color: var(--primary); }
+    /* HERO */
+    .hero{margin:14px;border-radius:16px;background:linear-gradient(135deg,#0D3321,#0A2218);border:1px solid rgba(0,200,83,.2);padding:18px 20px;position:relative;overflow:hidden;}
+    .hero::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:radial-gradient(circle,rgba(0,200,83,.15),transparent 70%);}
+    .hero-row{display:flex;justify-content:space-between;align-items:flex-start;}
+    .hero-label{font-size:11px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+    .hero-val{font-size:26px;font-weight:900;color:#fff;}
+    .hero-val span{font-size:14px;font-weight:700;color:var(--primary);}
+    .hero-badge{background:var(--grad);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:50px;}
 
-    /* Plan Cards */
-    .plans-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px 15px; }
-    .plan-card { background: var(--card); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.3s; }
-    .plan-card:hover { transform: translateY(-5px); }
-    .plan-image { width: 100%; height: 150px; background: linear-gradient(135deg, #2ecc71, #27ae60); display: flex; align-items: center; justify-content: center; color: white; font-size: 40px; position: relative; overflow: hidden; }
-    .plan-image::after { content: ''; position: absolute; width: 150%; height: 150%; background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; }
-    .plan-info { padding: 12px; }
-    .plan-name { font-size: 13px; color: var(--text); font-weight: 600; margin-bottom: 5px; }
-    .plan-details { font-size: 11px; color: var(--light-text); margin-bottom: 3px; }
-    .plan-price { font-size: 14px; color: var(--primary); font-weight: 700; }
-    .plan-btn { width: 100%; padding: 10px; background: var(--card); border: 2px solid var(--primary); color: var(--primary); border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-    .plan-btn:hover { background: var(--primary); color: white; }
+    /* STAT CARDS */
+    .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 14px 14px;}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;}
+    .stat-card .lbl{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;}
+    .stat-card .val{font-size:20px;font-weight:900;color:var(--text);}
+    .stat-card .val.green{color:var(--primary);}
+    .stat-card .val.red{color:var(--danger);}
+    .stat-card .action-btn{margin-top:10px;width:100%;padding:8px;background:var(--grad);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
 
-    /* Bottom Nav */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; z: 999; }
-    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--light-text); cursor: pointer; font-size: 12px; transition: color 0.3s; border-top: 3px solid transparent; }
-    .nav-item.active { color: var(--primary); border-top-color: var(--primary); }
-    .nav-item i { font-size: 24px; }
+    /* QUICK GRID */
+    .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 14px 14px;}
+    .quick-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;transition:all .2s;}
+    .quick-item:hover{border-color:var(--primary);background:var(--card2);}
+    .quick-item i{font-size:22px;color:var(--primary);display:block;margin-bottom:6px;}
+    .quick-item span{font-size:10px;color:var(--muted);font-weight:700;line-height:1.3;}
 
-    /* Modal */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z: 2000; align-items: center; justify-content: center; }
-    .modal.active { display: flex; }
-    .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 15px; padding: 20px; position: relative; max-height: 90vh; overflow-y: auto; }
-    .modal-close { position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; border: none; background: #f0f0f0; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-    .modal-title { font-size: 18px; color: var(--text); font-weight: 700; margin-bottom: 15px; }
+    /* SECTION TITLE */
+    .sec-title{padding:6px 14px 10px;font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
 
-    /* Buttons */
-    .btn { padding: 12px 20px; border: none; border-radius: 5px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--dark); }
-    .btn-secondary { background: #f0f0f0; color: var(--text); }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-block { width: 100%; display: block; }
+    /* TABS */
+    .tabs-bar{display:flex;gap:8px;padding:0 14px 12px;overflow-x:auto;}
+    .tabs-bar::-webkit-scrollbar{display:none;}
+    .tab-btn{padding:8px 16px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;}
+    .tab-btn.active{background:var(--grad);color:#fff;border-color:transparent;}
 
-    /* Utils */
-    .mt-10 { margin-top: 10px; }
-    .mt-15 { margin-top: 15px; }
-    .mb-10 { margin-bottom: 10px; }
-    .text-center { text-align: center; }
-    .text-sm { font-size: 12px; }
-    .text-gray { color: var(--light-text); }
-    .flex { display: flex; }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .gap-10 { gap: 10px; }
+    /* PLAN CARDS */
+    .plans-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 14px 14px;}
+    .plan-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;}
+    .plan-card:hover{transform:translateY(-3px);border-color:var(--primary);}
+    .plan-img{width:100%;height:130px;object-fit:cover;background:linear-gradient(135deg,#0D3321,#0A2218);display:flex;align-items:center;justify-content:center;font-size:36px;}
+    .plan-img img{width:100%;height:130px;object-fit:cover;}
+    .plan-body{padding:12px;}
+    .plan-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px;}
+    .plan-meta{font-size:11px;color:var(--muted);margin-bottom:2px;}
+    .plan-price{font-size:15px;font-weight:900;color:var(--primary);margin:6px 0;}
+    .plan-buy{width:100%;padding:8px;background:transparent;border:1px solid var(--primary);color:var(--primary);border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;}
+    .plan-buy:hover{background:var(--primary);color:#fff;}
+
+    /* BOTTOM NAV */
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:500;}
+    .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);cursor:pointer;transition:color .2s;font-size:11px;font-weight:700;border:none;background:transparent;}
+    .nav-btn i{font-size:22px;}
+    .nav-btn.active{color:var(--primary);}
+
+    /* INNER PAGES */
+    .inner-page{padding:0 14px 20px;}
+    .page-header{display:flex;align-items:center;gap:12px;padding:14px 14px 16px;background:var(--card);border-bottom:1px solid var(--border);margin-bottom:14px;position:sticky;top:0;z-index:100;}
+    .page-header .back-btn{width:36px;height:36px;background:var(--card2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;flex-shrink:0;}
+    .page-header h2{font-size:17px;font-weight:900;color:var(--text);}
+
+    /* CARDS */
+    .c-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+    .c-card .c-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+    .c-card .c-row:last-child{border-bottom:none;}
+    .c-row .c-label{font-size:12px;color:var(--muted);font-weight:700;}
+    .c-row .c-val{font-size:14px;color:var(--text);font-weight:700;}
+
+    /* HISTORY ITEMS */
+    .hist-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+    .hist-left .h-type{font-size:14px;font-weight:800;color:var(--text);}
+    .hist-left .h-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+    .hist-left .h-date{font-size:11px;color:var(--muted);}
+    .hist-right .h-amt{font-size:16px;font-weight:900;}
+    .hist-right .h-status{font-size:11px;font-weight:800;margin-top:4px;text-align:right;}
+    .badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:10px;font-weight:800;}
+    .badge.pending{background:rgba(240,165,0,.15);color:var(--warn);}
+    .badge.approved{background:rgba(0,200,83,.15);color:var(--success);}
+    .badge.rejected{background:rgba(255,77,77,.15);color:var(--danger);}
+
+    /* PROFILE */
+    .profile-hero{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center;margin-bottom:12px;}
+    .avatar-wrap{position:relative;width:80px;margin:0 auto 12px;cursor:pointer;}
+    .avatar-circle{width:80px;height:80px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;overflow:hidden;border:3px solid var(--primary);box-shadow:0 4px 16px rgba(0,200,83,.3);}
+    .avatar-circle img{width:80px;height:80px;object-fit:cover;border-radius:50%;}
+    .cam-btn{position:absolute;bottom:0;right:0;width:24px;height:24px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
+    .cam-btn i{font-size:10px;color:#fff;}
+    .profile-name{font-size:18px;font-weight:900;color:var(--text);}
+    .profile-phone{font-size:13px;color:var(--muted);margin-top:3px;}
+
+    /* MODAL */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:3000;align-items:flex-end;justify-content:center;}
+    .modal.active{display:flex;}
+    .modal-box{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:slideUp 200ms ease;}
+    @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+    .modal-head h3{font-size:17px;font-weight:900;color:var(--text);}
+    .modal-close{width:32px;height:32px;background:var(--card2);border:1px solid var(--border);border-radius:50%;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+    /* BUTTONS */
+    .btn{padding:12px 18px;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;}
+    .btn-primary{background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(0,200,83,.25);}
+    .btn-primary:hover{opacity:.9;}
+    .btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+    .btn-danger{background:rgba(255,77,77,.15);color:var(--danger);border:1px solid rgba(255,77,77,.3);}
+    .btn-block{width:100%;display:block;}
+    .mt-10{margin-top:10px;}
+    .mt-14{margin-top:14px;}
+    .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+    .empty-state i{font-size:40px;opacity:.3;margin-bottom:12px;display:block;}
+    .empty-state p{font-size:14px;}
+
+    /* MINE MENU */
+    .mine-menu{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+    .mine-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s;}
+    .mine-item:hover{border-color:var(--primary);}
+    .mine-item i{font-size:22px;color:var(--primary);display:block;margin-bottom:6px;}
+    .mine-item span{font-size:11px;color:var(--muted);font-weight:700;line-height:1.3;}
+
+    /* TEAM */
+    .team-member{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+    .team-avatar{width:40px;height:40px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:900;flex-shrink:0;}
+    .team-info .t-phone{font-size:13px;font-weight:700;color:var(--text);}
+    .team-info .t-date{font-size:11px;color:var(--muted);}
+
+    /* PROGRESS BAR */
+    .prog-bar{height:6px;background:var(--border);border-radius:10px;margin:8px 0;}
+    .prog-fill{height:6px;background:var(--grad);border-radius:10px;}
   </style>
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN -->
 <div id="page-login" class="page active">
-  <div class="login-container">
-    <div class="login-header">
-      <h1>🌿 Green Power</h1>
-      <p class="tagline">Your Financial Expert</p>
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-icon">🌿</div>
+      <h1>Green Power</h1>
+      <p>Your Financial Expert</p>
     </div>
-    <div class="login-form">
-      <div id="loginError" class="error-msg hidden"></div>
-      <div id="loginSuccess" class="success-msg hidden"></div>
-      <div class="form-group">
-        <label>Phone Number</label>
-        <input type="text" id="loginPhone" placeholder="Enter mobile number" />
+    <div class="login-box">
+      <div class="login-tabs">
+        <button class="active" id="loginTab" onclick="showTab('login')">Login</button>
+        <button id="regTab" onclick="showTab('register')">Register</button>
       </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="Enter password" />
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <div id="loginError" class="err-msg hidden"></div>
+        <div class="fg"><label>Mobile Number</label><input type="tel" id="loginPhone" placeholder="Enter mobile number"></div>
+        <div class="fg"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter password"></div>
+        <button class="btn-login" onclick="handleLogin()">Login</button>
       </div>
-      <button class="login-btn" onclick="handleLogin()">Login</button>
-      <div style="text-align: center; margin-top: 15px; font-size: 13px;">
-        <span>Don't have account? <a href="#" onclick="toggleRegister()" style="color: var(--primary); text-decoration: none;">Register</a></span>
-      </div>
-    </div>
-    <div class="login-form hidden" id="registerForm" style="margin-top: 20px;">
-      <div id="registerError" class="error-msg hidden"></div>
-      <div id="registerSuccess" class="success-msg hidden"></div>
-      <div class="form-group">
-        <label>Phone Number</label>
-        <input type="text" id="regPhone" placeholder="Enter mobile number" />
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="regPassword" placeholder="Enter password (min 6 chars)" />
-      </div>
-      <div class="form-group">
-        <label>Confirm Password</label>
-        <input type="password" id="regConfirm" placeholder="Confirm password" />
-      </div>
-      <div class="form-group">
-        <label>Invitation Code (Optional)</label>
-        <input type="text" id="inviteCode" placeholder="Enter referral code" />
-      </div>
-      <div class="form-group checkbox">
-        <input type="checkbox" id="agreeTerms" />
-        <label for="agreeTerms">I agree to Terms & Conditions</label>
-      </div>
-      <button class="login-btn" onclick="handleRegister()">Register</button>
-      <div style="text-align: center; margin-top: 15px; font-size: 13px;">
-        <span>Already registered? <a href="#" onclick="toggleRegister()" style="color: var(--primary); text-decoration: none;">Login</a></span>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" class="hidden">
+        <div id="registerError" class="err-msg hidden"></div>
+        <div id="registerSuccess" class="ok-msg hidden"></div>
+        <div class="fg"><label>Mobile Number</label><input type="tel" id="regPhone" placeholder="Enter mobile number"></div>
+        <div class="fg"><label>Password</label><input type="password" id="regPassword" placeholder="Min 6 characters"></div>
+        <div class="fg"><label>Confirm Password</label><input type="password" id="regConfirm" placeholder="Confirm password"></div>
+        <div class="fg"><label>Invite Code (Optional)</label><input type="text" id="inviteCode" placeholder="Enter referral code"></div>
+        <div class="fg check"><input type="checkbox" id="agreeTerms"><label for="agreeTerms">I agree to Terms & Conditions</label></div>
+        <button class="btn-login" onclick="handleRegister()">Create Account</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- APP -->
 <div id="app" class="hidden">
-  <div class="app-container">
+  <div class="app-body">
 
-    <!-- HOME PAGE -->
+    <!-- HOME -->
     <div id="page-home" class="page active">
+      <div class="top-bar">
+        <div class="brand">Green <span>Power</span></div>
+        <div class="notif"><i class="fas fa-bell"></i></div>
+      </div>
+      <div style="height:14px;"></div>
+
+      <!-- Balance Hero -->
       <div class="hero">
-        <h2>Exclusive for Newcomers</h2>
-        <p>Click to receive benefits</p>
-      </div>
-      
-      <div class="tabs">
-        <button class="active" onclick="switchCategory('vip')">💎 VIP PRO</button>
-        <button onclick="switchCategory('fixed')">🔒 Fixed PRO</button>
-        <button onclick="switchCategory('event')">📦 Event PRO</button>
-      </div>
-
-      <div class="card flex-between">
-        <div>
-          <div class="card-desc">Recharge Balance</div>
-          <div class="card-value" id="rechargeBalance">₹0</div>
+        <div class="hero-label">Total Balance</div>
+        <div class="hero-row">
+          <div class="hero-val"><span>₹</span><span id="heroBal">0</span></div>
+          <div class="hero-badge">VIP</div>
         </div>
-        <button class="btn btn-primary" onclick="openRechargeModal()">Recharge</button>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:8px;">Withdraw Balance: ₹<span id="heroWithBal">0</span></div>
       </div>
 
-      <div class="card flex-between">
-        <div>
-          <div class="card-desc">Withdraw Balance</div>
-          <div class="card-value" id="withdrawBalance">₹0</div>
+      <!-- Stat Cards -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="lbl">Recharge</div>
+          <div class="val green">₹<span id="rechargeBalance">0</span></div>
+          <button class="action-btn" onclick="openRechargeModal()">+ Deposit</button>
         </div>
-        <button class="btn btn-primary" onclick="openWithdrawModal()">Withdraw</button>
-      </div>
-
-      <div class="card">
-        <div style="display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; font-size: 13px;">
-          <div style="text-align: center; padding: 10px;">
-            <i class="fas fa-history" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span onclick="goToPage('purchase-history')" style="cursor: pointer;">Purchase History</span>
-          </div>
-          <div style="text-align: center; padding: 10px;">
-            <i class="fas fa-money-bill" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span onclick="goToPage('funding')" style="cursor: pointer;">Funding Details</span>
-          </div>
-          <div style="text-align: center; padding: 10px;">
-            <i class="fas fa-share-alt" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span onclick="shareCode()" style="cursor: pointer;">Share</span>
-          </div>
-          <div style="text-align: center; padding: 10px;">
-            <i class="fas fa-users" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span onclick="navTo('team')" style="cursor: pointer;">Team</span>
-          </div>
+        <div class="stat-card">
+          <div class="lbl">Withdraw</div>
+          <div class="val red">₹<span id="withdrawBalance">0</span></div>
+          <button class="action-btn" onclick="openWithdrawModal()">Withdraw</button>
         </div>
       </div>
 
+      <!-- Quick Links -->
+      <div class="quick-grid">
+        <div class="quick-item" onclick="goToPage('purchase-history')">
+          <i class="fas fa-history"></i><span>Purchase History</span>
+        </div>
+        <div class="quick-item" onclick="goToPage('funding')">
+          <i class="fas fa-exchange-alt"></i><span>Transactions</span>
+        </div>
+        <div class="quick-item" onclick="shareCode()">
+          <i class="fas fa-share-alt"></i><span>Share</span>
+        </div>
+        <div class="quick-item" onclick="navTo('team')">
+          <i class="fas fa-users"></i><span>Team</span>
+        </div>
+      </div>
+
+      <!-- Plans -->
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="switchCat(this,'vip')">💎 VIP PRO</button>
+        <button class="tab-btn" onclick="switchCat(this,'fixed')">🔒 Fixed PRO</button>
+        <button class="tab-btn" onclick="switchCat(this,'event')">📦 Event PRO</button>
+      </div>
       <div id="plansList" class="plans-grid"></div>
     </div>
 
-    <!-- EARNINGS PAGE -->
+    <!-- EARNINGS -->
     <div id="page-earnings" class="page">
-      <div class="hero">
-        <h2>📈 Profession Becomes Value</h2>
-        <p>Invest to create wealth</p>
+      <div class="top-bar">
+        <div class="brand">📈 <span>Earnings</span></div>
       </div>
-      <div class="tabs">
-        <button class="active" onclick="switchCategory('vip')">💎 VIP PRO</button>
-        <button onclick="switchCategory('fixed')">🔒 Fixed PRO</button>
-        <button onclick="switchCategory('event')">📦 Event PRO</button>
+      <div style="height:14px;"></div>
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="switchCat(this,'vip')">💎 VIP PRO</button>
+        <button class="tab-btn" onclick="switchCat(this,'fixed')">🔒 Fixed PRO</button>
+        <button class="tab-btn" onclick="switchCat(this,'event')">📦 Event PRO</button>
       </div>
       <div id="earningsList" class="plans-grid"></div>
     </div>
 
-    <!-- TEAM PAGE -->
+    <!-- TEAM -->
     <div id="page-team" class="page">
-      <div class="hero">
-        <h2>👥 Team & Referrals</h2>
-        <p>Grow your network and earn commissions</p>
+      <div class="top-bar">
+        <div class="brand">👥 <span>Team</span></div>
       </div>
-      <div class="card">
-        <div class="card-title">Your Referral Code</div>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <input type="text" id="myRefCode" readonly style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;" />
-          <button class="btn btn-primary" onclick="copyRefCode()">Copy</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Team Statistics</div>
-        <div class="flex mt-10" style="gap: 20px;">
-          <div>
-            <div class="card-desc">Total Members</div>
-            <div class="card-value" id="teamCount">0</div>
-          </div>
-          <div>
-            <div class="card-desc">Total Commission</div>
-            <div class="card-value" id="teamComm">₹0</div>
+      <div style="padding:14px;">
+        <div class="c-card" style="margin-bottom:12px;">
+          <div class="lbl" style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px;">YOUR REFERRAL CODE</div>
+          <div style="display:flex;gap:10px;">
+            <input id="myRefCode" readonly style="flex:1;padding:11px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-weight:800;">
+            <button class="btn btn-primary" onclick="copyRefCode()">Copy</button>
           </div>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Team Members</div>
-        <div id="teamList" style="margin-top: 10px; font-size: 13px;"></div>
+        <div class="stat-row" style="margin:0 0 14px;">
+          <div class="stat-card"><div class="lbl">Members</div><div class="val green" id="teamCount">0</div></div>
+          <div class="stat-card"><div class="lbl">Commission</div><div class="val green">₹<span id="teamComm">0</span></div></div>
+        </div>
+        <div class="sec-title">TEAM MEMBERS</div>
+        <div id="teamList"></div>
       </div>
     </div>
 
-    <!-- MINE PAGE -->
+    <!-- MINE -->
     <div id="page-mine" class="page">
-      <div class="card" style="text-align: center; padding: 20px;">
-        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--dark)); margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px;">
-          <i class="fas fa-user"></i>
-        </div>
-        <div style="font-size: 16px; color: var(--text); font-weight: 600; margin-bottom: 5px;" id="profileName">User</div>
-        <div style="font-size: 12px; color: var(--light-text);" id="profilePhone"></div>
+      <div class="top-bar">
+        <div class="brand">👤 <span>Profile</span></div>
       </div>
-
-      <div class="card">
-        <div class="flex-between mb-10">
-          <div>
-            <div class="card-desc">ID: <span id="userId">-</span></div>
-            <div class="card-desc mt-10">Code: <span id="userCode" style="color: var(--primary); font-weight: 600;">-</span> <a href="#" onclick="copyRefCode()" style="color: var(--primary); text-decoration: none; margin-left: 10px;">Copy</a></div>
+      <div style="padding:14px;">
+        <div class="profile-hero">
+          <div class="avatar-wrap" onclick="document.getElementById('avatarInput').click()">
+            <div class="avatar-circle">
+              <i class="fas fa-user" id="avatarIcon"></i>
+              <img id="avatarImg" src="" style="display:none;">
+            </div>
+            <div class="cam-btn"><i class="fas fa-camera"></i></div>
           </div>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+          <div id="avatarStatus" style="font-size:11px;color:var(--primary);margin-bottom:4px;display:none;">Uploading...</div>
+          <div class="profile-name" id="profileName">User</div>
+          <div class="profile-phone" id="profilePhone"></div>
+          <div style="margin-top:10px;font-size:12px;color:var(--muted);">ID: <b id="userId">-</b> &nbsp;|&nbsp; Code: <b id="userCode" style="color:var(--primary);">-</b> <a href="#" onclick="copyRefCode()" style="color:var(--primary);text-decoration:none;margin-left:6px;font-size:11px;">Copy</a></div>
         </div>
-      </div>
 
-      <div class="card flex-between">
-        <div>
-          <div class="card-desc">Total Recharge</div>
-          <div class="card-value" id="totalRecharge">₹0</div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="lbl">Total Recharge</div><div class="val green">₹<span id="totalRecharge">0</span></div></div>
+          <div class="stat-card"><div class="lbl">Total Withdraw</div><div class="val red">₹<span id="totalWithdraw">0</span></div></div>
         </div>
-        <button class="btn btn-primary" onclick="openRechargeModal()">Recharge</button>
-      </div>
 
-      <div class="card flex-between">
-        <div>
-          <div class="card-desc">Total Withdraw</div>
-          <div class="card-value" id="totalWithdraw">₹0</div>
-        </div>
-        <button class="btn btn-primary" onclick="openWithdrawModal()">Withdraw</button>
-      </div>
-
-      <div class="card">
-        <div style="display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; font-size: 11px;">
-          <div style="text-align: center; padding: 10px;" onclick="goToPage('purchase-history')">
-            <i class="fas fa-shopping-bag" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span>Purchase<br/>History</span>
+        <div class="mine-menu">
+          <div class="mine-item" onclick="goToPage('purchase-history')">
+            <i class="fas fa-shopping-bag"></i><span>Purchase History</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="goToPage('funding')">
-            <i class="fas fa-shield-alt" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span>Funding<br/>Details</span>
+          <div class="mine-item" onclick="goToPage('deposit-history')">
+            <i class="fas fa-arrow-circle-down"></i><span>Deposit History</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="goToPage('bank-cards')">
-            <i class="fas fa-credit-card" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span>Bank Card<br/>Manager</span>
+          <div class="mine-item" onclick="goToPage('withdraw-history')">
+            <i class="fas fa-arrow-circle-up"></i><span>Withdrawal History</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="navTo('team')">
-            <i class="fas fa-users" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span>Team<br/>Members</span>
+          <div class="mine-item" onclick="goToPage('funding')">
+            <i class="fas fa-list-alt"></i><span>All Transactions</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="goToPage('commissions')">
-            <i class="fas fa-star" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span>Commission<br/>Record</span>
+          <div class="mine-item" onclick="goToPage('bank-cards')">
+            <i class="fas fa-credit-card"></i><span>Bank Cards</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="shareCode()">
-            <i class="fas fa-share-alt" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span>Share<br/>Code</span>
+          <div class="mine-item" onclick="goToPage('commissions')">
+            <i class="fas fa-star"></i><span>Commissions</span>
           </div>
         </div>
-      </div>
 
-      <button class="btn btn-block btn-danger mt-15" onclick="handleLogout()">Sign Out</button>
+        <button class="btn btn-danger btn-block" onclick="handleLogout()">
+          <i class="fas fa-sign-out-alt"></i> Sign Out
+        </button>
+      </div>
     </div>
 
     <!-- PURCHASE HISTORY -->
     <div id="page-purchase-history" class="page">
-      <div class="card" style="padding: 20px; text-align: center;">
-        <h3 style="color: var(--text); margin-bottom: 15px;">
-          <a href="#" onclick="goToPage('mine')" style="text-decoration: none; color: var(--text);">← Back</a>
-          <span style="margin-left: 10px;">Purchase History</span>
-        </h3>
-        <div id="purchaseList" style="text-align: left; font-size: 13px;"></div>
+      <div class="page-header">
+        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
+        <h2>Purchase History</h2>
       </div>
+      <div class="inner-page"><div id="purchaseList"></div></div>
     </div>
 
-    <!-- FUNDING DETAILS -->
-    <div id="page-funding" class="page">
-      <div class="card" style="padding: 20px;">
-        <h3 style="color: var(--text); margin-bottom: 15px;">
-          <a href="#" onclick="goToPage('mine')" style="text-decoration: none; color: var(--text);">← Back</a>
-          <span style="margin-left: 10px;">Funding Details</span>
-        </h3>
-        <div id="fundingList" style="font-size: 13px;"></div>
+    <!-- DEPOSIT HISTORY -->
+    <div id="page-deposit-history" class="page">
+      <div class="page-header">
+        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
+        <h2>Deposit History</h2>
       </div>
+      <div class="inner-page"><div id="depositHistoryList"></div></div>
+    </div>
+
+    <!-- WITHDRAWAL HISTORY -->
+    <div id="page-withdraw-history" class="page">
+      <div class="page-header">
+        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
+        <h2>Withdrawal History</h2>
+      </div>
+      <div class="inner-page"><div id="withdrawHistoryList"></div></div>
+    </div>
+
+    <!-- FUNDING -->
+    <div id="page-funding" class="page">
+      <div class="page-header">
+        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
+        <h2>All Transactions</h2>
+      </div>
+      <div class="inner-page"><div id="fundingList"></div></div>
     </div>
 
     <!-- COMMISSIONS -->
     <div id="page-commissions" class="page">
-      <div class="card" style="padding: 20px;">
-        <h3 style="color: var(--text); margin-bottom: 15px;">
-          <a href="#" onclick="goToPage('mine')" style="text-decoration: none; color: var(--text);">← Back</a>
-          <span style="margin-left: 10px;">Commission Record</span>
-        </h3>
-        <div id="commissionList" style="font-size: 13px;"></div>
+      <div class="page-header">
+        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
+        <h2>Commission Record</h2>
       </div>
+      <div class="inner-page"><div id="commissionList"></div></div>
     </div>
 
     <!-- BANK CARDS -->
     <div id="page-bank-cards" class="page">
-      <div class="card" style="padding: 20px;">
-        <h3 style="color: var(--text); margin-bottom: 15px;">
-          <a href="#" onclick="goToPage('mine')" style="text-decoration: none; color: var(--text);">← Back</a>
-          <span style="margin-left: 10px;">Bank Card Manager</span>
-        </h3>
-        <button class="btn btn-primary btn-block" onclick="openAddCardModal()" style="margin-bottom: 15px;">+ Add Bank Card</button>
-        <div id="bankCardsList" style="font-size: 13px;"></div>
+      <div class="page-header">
+        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
+        <h2>Bank Cards</h2>
+      </div>
+      <div class="inner-page">
+        <button class="btn btn-primary btn-block" onclick="openAddCardModal()" style="margin-bottom:14px;">+ Add Bank Card</button>
+        <div id="bankCardsList"></div>
       </div>
     </div>
 
@@ -378,763 +443,522 @@
 
   <!-- BOTTOM NAV -->
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="navTo('home')">
-      <i class="fas fa-home"></i>
-      <span>Home</span>
-    </div>
-    <div class="nav-item" onclick="navTo('earnings')">
-      <i class="fas fa-chart-line"></i>
-      <span>Earnings</span>
-    </div>
-    <div class="nav-item" onclick="navTo('team')">
-      <i class="fas fa-users"></i>
-      <span>Team</span>
-    </div>
-    <div class="nav-item" onclick="navTo('mine')">
-      <i class="fas fa-user"></i>
-      <span>Mine</span>
-    </div>
+    <button class="nav-btn active" onclick="navTo('home',this)"><i class="fas fa-home"></i>Home</button>
+    <button class="nav-btn" onclick="navTo('earnings',this)"><i class="fas fa-chart-line"></i>Earnings</button>
+    <button class="nav-btn" onclick="navTo('team',this)"><i class="fas fa-users"></i>Team</button>
+    <button class="nav-btn" onclick="navTo('mine',this)"><i class="fas fa-user"></i>Mine</button>
   </div>
 </div>
 
-<!-- MODALS -->
+<!-- CHECKOUT PAGE -->
+<div id="page-checkout" class="page">
+  <div class="page-header">
+    <div class="back-btn" onclick="goToPage('home')"><i class="fas fa-arrow-left"></i></div>
+    <h2>Complete Payment</h2>
+  </div>
+  <div style="padding:0 14px 30px;">
+    <div style="background:var(--grad);border-radius:14px;padding:20px;text-align:center;margin-bottom:16px;">
+      <div style="font-size:13px;color:rgba(255,255,255,.7);">Plan Amount</div>
+      <div style="font-size:32px;font-weight:900;color:#fff;">₹<span id="checkoutAmount">0</span></div>
+    </div>
+    <div class="c-card" style="text-align:center;margin-bottom:14px;">
+      <div style="font-weight:800;color:var(--text);margin-bottom:14px;">Scan QR Code to Pay</div>
+      <div id="paymentQR" style="width:220px;height:220px;margin:0 auto 14px;background:var(--card2);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">
+        <div style="text-align:center;color:var(--muted);"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;font-size:13px;">Loading QR...</div></div>
+      </div>
+    </div>
+    <div class="c-card" style="margin-bottom:14px;">
+      <div class="c-row"><span class="c-label">UPI ID</span><span class="c-val" id="paymentUPI">greenpower@upi</span></div>
+      <div class="c-row"><span class="c-label">Name</span><span class="c-val">Green Power</span></div>
+      <div class="c-row"><span class="c-label">Amount</span><span class="c-val" style="color:var(--primary);">₹<span id="manualAmount">0</span></span></div>
+    </div>
+    <div style="background:rgba(0,200,83,.08);border:1px solid rgba(0,200,83,.2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted);">
+      ✅ After payment, enter UTR ID and upload screenshot below
+    </div>
+    <div class="fg"><label>UTR ID / Transaction ID</label><input type="text" id="transactionRef" placeholder="Enter UTR ID from receipt"></div>
+    <div class="fg"><label>Payment Screenshot</label><input type="file" id="paymentProof" accept="image/*" style="color:var(--muted);"></div>
+    <button class="btn btn-primary btn-block mt-14" onclick="submitPaymentProof()">✅ Confirm Payment</button>
+    <button class="btn btn-secondary btn-block mt-10" onclick="goToPage('home')">Cancel</button>
+  </div>
+</div>
 
-<!-- BUY PLAN MODAL -->
+<!-- BUY MODAL -->
 <div id="buyModal" class="modal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeBuyModal()">×</button>
-    <div class="modal-title">Purchase Investment Plan</div>
-    <div id="buyDetails" style="margin-bottom: 20px;">
-      <div style="width: 100%; height: 200px; background: linear-gradient(135deg, #2ecc71, #27ae60); border-radius: 10px; margin-bottom: 15px;"></div>
-      <div class="card-name" id="buyPlanName" style="font-size: 16px; color: var(--text); font-weight: 600; margin-bottom: 10px;"></div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 13px;">
-        <div>
-          <div class="text-gray">Price</div>
-          <div style="font-size: 18px; color: var(--primary); font-weight: 600;">₹<span id="buyPrice">0</span></div>
-        </div>
-        <div>
-          <div class="text-gray">Total Income</div>
-          <div style="font-size: 18px; color: var(--success); font-weight: 600;">₹<span id="buyIncome">0</span></div>
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 13px;">
-        <div>
-          <div class="text-gray">Daily Income</div>
-          <div style="font-size: 16px; color: var(--primary); font-weight: 600;">₹<span id="buyDaily">0</span></div>
-        </div>
-        <div>
-          <div class="text-gray">Cycle Days</div>
-          <div style="font-size: 16px; color: var(--text); font-weight: 600;"><span id="buyCycle">0</span> Days</div>
-        </div>
-      </div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Purchase Plan</h3>
+      <button class="modal-close" onclick="closeBuyModal()">×</button>
+    </div>
+    <div style="background:var(--grad);border-radius:12px;height:160px;margin-bottom:16px;"></div>
+    <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:14px;" id="buyPlanName"></div>
+    <div class="stat-row" style="margin:0 0 14px;">
+      <div class="stat-card"><div class="lbl">Price</div><div class="val green">₹<span id="buyPrice">0</span></div></div>
+      <div class="stat-card"><div class="lbl">Total Income</div><div class="val" style="color:#00E676;">₹<span id="buyIncome">0</span></div></div>
+    </div>
+    <div class="stat-row" style="margin:0 0 16px;">
+      <div class="stat-card"><div class="lbl">Daily Income</div><div class="val green">₹<span id="buyDaily">0</span></div></div>
+      <div class="stat-card"><div class="lbl">Cycle Days</div><div class="val"><span id="buyCycle">0</span>d</div></div>
     </div>
     <button class="btn btn-primary btn-block" onclick="goToPayment()">Proceed to Payment</button>
     <button class="btn btn-secondary btn-block mt-10" onclick="closeBuyModal()">Cancel</button>
   </div>
 </div>
 
-<!-- PAYMENT/CHECKOUT PAGE -->
-<div id="page-checkout" class="page">
-  <div class="card" style="padding: 20px; text-align: center;">
-    <h3 style="color: var(--text); margin-bottom: 20px;">
-      <a href="#" onclick="goToPage('home')" style="text-decoration: none; color: var(--text);">← Back</a>
-      <span style="margin-left: 10px;">Complete Payment</span>
-    </h3>
-    
-    <div style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-      <div style="font-size: 13px;">Plan Amount</div>
-      <div style="font-size: 28px; font-weight: 700;">₹<span id="checkoutAmount">0</span></div>
-    </div>
-
-    <div style="margin-bottom: 20px;">
-      <h4 style="color: var(--text); margin-bottom: 15px;">Scan QR Code to Pay</h4>
-      <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid var(--primary);">
-        <div id="paymentQR" style="width: 250px; height: 250px; margin: 0 auto; background: #f0f0f0; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-          <div style="text-align: center; color: var(--light-text);">
-            <i class="fas fa-qrcode" style="font-size: 50px; opacity: 0.3;"></i>
-            <div style="margin-top: 10px;">Loading QR...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: left;">
-      <div style="font-weight: bold; color: var(--text); margin-bottom: 10px;">📱 Manual Payment (If QR not working):</div>
-      <div style="font-size: 13px; color: var(--text); margin-bottom: 8px;">
-        <strong>UPI ID:</strong> <span id="paymentUPI">greenpower@upi</span>
-      </div>
-      <div style="font-size: 13px; color: var(--text); margin-bottom: 8px;">
-        <strong>Name:</strong> Green Power
-      </div>
-      <div style="font-size: 13px; color: var(--text);">
-        <strong>Amount:</strong> ₹<span id="manualAmount">0</span>
-      </div>
-    </div>
-
-    <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 12px; color: #0c5460; border-left: 4px solid var(--primary);">
-      ✅ After payment, upload screenshot below to confirm
-    </div>
-
-    <div class="form-group">
-      <label>UTR ID / Transaction ID</label>
-      <input type="text" id="transactionRef" placeholder="Enter UTR ID from payment receipt" />
-    </div>
-
-    <div class="form-group">
-      <label>Payment Screenshot (Proof)</label>
-      <input type="file" id="paymentProof" accept="image/*" />
-    </div>
-
-    <button class="btn btn-primary btn-block" onclick="submitPaymentProof()" style="margin-bottom: 10px;">✅ Confirm Payment</button>
-    <button class="btn btn-secondary btn-block" onclick="goToPage('home')">Cancel</button>
-  </div>
-</div>
-
 <!-- RECHARGE MODAL -->
 <div id="rechargeModal" class="modal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeRechargeModal()">×</button>
-    <div class="modal-title">Deposit / Recharge</div>
-    <div id="rechargeError" class="error-msg hidden"></div>
-    <div class="form-group">
-      <label>Amount (₹)</label>
-      <input type="number" id="rechargeAmount" placeholder="Enter amount" />
-    </div>
-    <div class="form-group">
-      <label>Payment Method</label>
-      <select id="paymentMethod" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-        <option>UPI</option>
-        <option>Bank Transfer</option>
-        <option>Wallet</option>
+  <div class="modal-box">
+    <div class="modal-head"><h3>Deposit / Recharge</h3><button class="modal-close" onclick="closeRechargeModal()">×</button></div>
+    <div id="rechargeError" class="err-msg hidden"></div>
+    <div class="fg"><label>Amount (₹)</label><input type="number" id="rechargeAmount" placeholder="Enter amount"></div>
+    <div class="fg"><label>Payment Method</label>
+      <select id="paymentMethod" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
+        <option>UPI</option><option>Bank Transfer</option><option>Wallet</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>UTR ID / Transaction ID (optional)</label>
-      <input type="text" id="transactionId" placeholder="Enter UTR ID if available" />
-    </div>
-    <div class="form-group">
-      <label>Proof Screenshot</label>
-      <input type="file" id="proofImage" accept="image/*" />
-    </div>
-    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 12px; color: var(--light-text);">
-      <strong>Instructions:</strong> Send payment to UPI shown in app. Upload screenshot for approval.
-    </div>
-    <button class="btn btn-primary btn-block" onclick="submitRecharge()">Submit</button>
+    <div class="fg"><label>UTR ID / Transaction ID (optional)</label><input type="text" id="transactionId" placeholder="Enter UTR ID"></div>
+    <div class="fg"><label>Proof Screenshot</label><input type="file" id="proofImage" accept="image/*" style="color:var(--muted);"></div>
+    <button class="btn btn-primary btn-block mt-10" onclick="submitRecharge()">Submit</button>
   </div>
 </div>
 
 <!-- WITHDRAW MODAL -->
 <div id="withdrawModal" class="modal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeWithdrawModal()">×</button>
-    <div class="modal-title">Request Withdrawal</div>
-    <div id="withdrawError" class="error-msg hidden"></div>
-    <div class="form-group">
-      <label>Amount (₹)</label>
-      <input type="number" id="withdrawAmount" placeholder="Enter amount" />
-    </div>
-    <div class="form-group">
-      <label>Bank Card</label>
-      <select id="bankCardSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Request Withdrawal</h3><button class="modal-close" onclick="closeWithdrawModal()">×</button></div>
+    <div id="withdrawError" class="err-msg hidden"></div>
+    <div class="fg"><label>Amount (₹)</label><input type="number" id="withdrawAmount" placeholder="Enter amount"></div>
+    <div class="fg"><label>Bank Card</label>
+      <select id="bankCardSelect" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
         <option value="">-- Select Bank Card --</option>
       </select>
-      <a href="#" onclick="goToPage('bank-cards')" style="color: var(--primary); font-size: 12px; margin-top: 5px; display: inline-block;">+ Add New Card</a>
+      <a href="#" onclick="goToPage('bank-cards')" style="color:var(--primary);font-size:12px;margin-top:6px;display:inline-block;font-weight:700;">+ Add New Card</a>
     </div>
-    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 12px; color: var(--light-text);">
-      <strong>Note:</strong> Withdrawals are processed within 24 hours.
+    <div style="background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);">
+      ⚡ Withdrawals processed within 24 hours
     </div>
     <button class="btn btn-primary btn-block" onclick="submitWithdraw()">Request Withdrawal</button>
   </div>
 </div>
 
-<!-- ADD BANK CARD MODAL -->
+<!-- ADD CARD MODAL -->
 <div id="addCardModal" class="modal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeAddCardModal()">×</button>
-    <div class="modal-title">Add Bank Card</div>
-    <div id="addCardError" class="error-msg hidden"></div>
-    <div class="form-group">
-      <label>Account Type</label>
-      <select id="cardType" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-        <option value="bank">Bank Account</option>
-        <option value="upi">UPI</option>
+  <div class="modal-box">
+    <div class="modal-head"><h3>Add Bank Card</h3><button class="modal-close" onclick="closeAddCardModal()">×</button></div>
+    <div id="addCardError" class="err-msg hidden"></div>
+    <div class="fg"><label>Account Type</label>
+      <select id="cardType" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
+        <option value="bank">Bank Account</option><option value="upi">UPI</option>
       </select>
     </div>
     <div id="bankFields">
-      <div class="form-group">
-        <label>Bank Name</label>
-        <input type="text" id="bankName" placeholder="e.g. HDFC Bank" />
-      </div>
-      <div class="form-group">
-        <label>Account Holder Name</label>
-        <input type="text" id="accountName" placeholder="Full name" />
-      </div>
-      <div class="form-group">
-        <label>Account Number</label>
-        <input type="text" id="accountNumber" placeholder="Account number" />
-      </div>
-      <div class="form-group">
-        <label>IFSC Code</label>
-        <input type="text" id="ifsc" placeholder="e.g. HDFC0000001" />
-      </div>
+      <div class="fg"><label>Bank Name</label><input type="text" id="bankName" placeholder="e.g. HDFC Bank"></div>
+      <div class="fg"><label>Account Holder Name</label><input type="text" id="accountName" placeholder="Full name"></div>
+      <div class="fg"><label>Account Number</label><input type="text" id="accountNumber" placeholder="Account number"></div>
+      <div class="fg"><label>IFSC Code</label><input type="text" id="ifsc" placeholder="e.g. HDFC0000001"></div>
     </div>
-    <div id="upiFields" style="display: none;">
-      <div class="form-group">
-        <label>UPI ID</label>
-        <input type="text" id="upiId" placeholder="e.g. user@upi" />
-      </div>
+    <div id="upiFields" style="display:none;">
+      <div class="fg"><label>UPI ID</label><input type="text" id="upiId" placeholder="e.g. user@upi"></div>
     </div>
-    <button class="btn btn-primary btn-block" onclick="submitAddCard()">Add Card</button>
+    <button class="btn btn-primary btn-block mt-10" onclick="submitAddCard()">Add Card</button>
   </div>
 </div>
 
 <script>
-  const API = '/api';
-  let token = localStorage.getItem('gp_token');
-  let currentUser = null;
-  let currentCategory = 'vip';
-  let allPlans = [];
-  let settings = {};
+const API='/api';
+let token=localStorage.getItem('gp_token');
+let currentUser=null,currentCategory='vip',allPlans=[],settings={};
 
-  // Init
-  document.addEventListener('DOMContentLoaded', async () => {
-    await loadSettings();
-    if (token) {
-      await loadUserProfile();
-      showApp();
-      loadDashboard();
-    } else {
-      showLogin();
-    }
-
-    document.getElementById('cardType').addEventListener('change', (e) => {
-      document.getElementById('bankFields').style.display = e.target.value === 'bank' ? 'block' : 'none';
-      document.getElementById('upiFields').style.display = e.target.value === 'upi' ? 'block' : 'none';
-    });
+document.addEventListener('DOMContentLoaded',async()=>{
+  await loadSettings();
+  if(token){await loadUserProfile();showApp();loadDashboard();}
+  else showLogin();
+  document.getElementById('cardType').addEventListener('change',e=>{
+    document.getElementById('bankFields').style.display=e.target.value==='bank'?'block':'none';
+    document.getElementById('upiFields').style.display=e.target.value==='upi'?'block':'none';
   });
+});
 
-  async function loadSettings() {
-    try {
-      const res = await fetch(`${API}/settings`);
-      settings = await res.json();
-    } catch (e) {}
-  }
+function showToast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function showErrEl(id,msg){const e=document.getElementById(id);if(e){e.textContent=msg;e.classList.remove('hidden');}}
+function hideEl(id){const e=document.getElementById(id);if(e)e.classList.add('hidden');}
 
-  async function loadUserProfile() {
-    try {
-      const res = await fetch(`${API}/user/profile`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      currentUser = await res.json();
-      updateUI();
-    } catch (e) {
-      console.error(e);
-    }
-  }
+function showLogin(){document.getElementById('page-login').classList.add('active');document.getElementById('app').classList.add('hidden');}
+function showApp(){document.getElementById('page-login').classList.remove('active');document.getElementById('app').classList.remove('hidden');}
 
-  async function loadDashboard() {
-    loadPlans();
-    loadTransactions();
-    loadTeam();
-    loadPurchases();
-    loadBankCards();
-    loadCommissions();
-  }
+function showTab(t){
+  document.getElementById('loginForm').classList.toggle('hidden',t!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden',t!=='register');
+  document.getElementById('loginTab').classList.toggle('active',t==='login');
+  document.getElementById('regTab').classList.toggle('active',t==='register');
+}
 
-  async function loadPlans() {
-    try {
-      const res = await fetch(`${API}/plans?category=${currentCategory}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      allPlans = await res.json();
-      renderPlans();
-    } catch (e) {}
-  }
+async function loadSettings(){try{const r=await fetch(`${API}/settings`);settings=await r.json();}catch(e){}}
 
-  function renderPlans() {
-    const html = allPlans.map(p => `
-      <div class="plan-card" onclick="openBuyModal(${p.id})">
-        <div class="plan-image" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">🔋</div>
-        <div class="plan-info">
-          <div class="plan-name">${p.name}</div>
-          <div class="plan-details">Price: ₹${p.price}</div>
-          <div class="plan-details">Income: ₹${p.total_income}</div>
-          <div class="plan-details">Cycle: ${p.cycle_days}d</div>
-          <div class="plan-price">₹${p.daily_income}/day</div>
-          <button class="plan-btn">Purchase</button>
-        </div>
+async function loadUserProfile(){
+  try{
+    const r=await fetch(`${API}/user/profile`,{headers:{Authorization:`Bearer ${token}`}});
+    currentUser=await r.json();updateUI();
+  }catch(e){}
+}
+
+function updateUI(){
+  if(!currentUser)return;
+  const fmt=v=>parseFloat(v||0).toFixed(2);
+  document.getElementById('heroBal').textContent=fmt(currentUser.balance);
+  document.getElementById('heroWithBal').textContent=fmt(currentUser.withdraw_balance);
+  document.getElementById('rechargeBalance').textContent=fmt(currentUser.balance);
+  document.getElementById('withdrawBalance').textContent=fmt(currentUser.withdraw_balance);
+  document.getElementById('totalRecharge').textContent=fmt(currentUser.total_recharge);
+  document.getElementById('totalWithdraw').textContent=fmt(currentUser.total_withdraw);
+  document.getElementById('profileName').textContent=currentUser.name||'User';
+  document.getElementById('profilePhone').textContent=currentUser.phone||'';
+  document.getElementById('userId').textContent=currentUser.id||'-';
+  document.getElementById('userCode').textContent=currentUser.invite_code||'-';
+  if(document.getElementById('myRefCode'))document.getElementById('myRefCode').value=currentUser.invite_code||'';
+  const img=document.getElementById('avatarImg'),icon=document.getElementById('avatarIcon');
+  if(currentUser.avatar){img.src=currentUser.avatar;img.style.display='block';icon.style.display='none';}
+  else{img.style.display='none';icon.style.display='';}
+}
+
+async function loadDashboard(){loadPlans();loadTransactions();loadTeam();loadPurchases();loadBankCards();loadCommissions();}
+
+async function loadPlans(){
+  try{
+    const r=await fetch(`${API}/plans?category=${currentCategory}`,{headers:{Authorization:`Bearer ${token}`}});
+    allPlans=await r.json();renderPlans();
+  }catch(e){}
+}
+
+function renderPlans(){
+  const html=allPlans.map(p=>{
+    const img=p.image_url?`<img src="${p.image_url}" onerror="this.parentElement.innerHTML='🔋'">`:'<span>🔋</span>';
+    return`<div class="plan-card" onclick="openBuyModal(${p.id})">
+      <div class="plan-img">${img}</div>
+      <div class="plan-body">
+        <div class="plan-name">${p.name}</div>
+        <div class="plan-meta">Price: ₹${p.price}</div>
+        <div class="plan-meta">Income: ₹${p.total_income} | ${p.cycle_days}d</div>
+        <div class="plan-price">₹${p.daily_income}/day</div>
+        <button class="plan-buy">Purchase</button>
       </div>
-    `).join('');
-    document.getElementById('plansList').innerHTML = html;
-    document.getElementById('earningsList').innerHTML = html;
-  }
+    </div>`;
+  }).join('');
+  const empty='<div class="empty-state"><i class="fas fa-box-open"></i><p>No plans available</p></div>';
+  document.getElementById('plansList').innerHTML=html||empty;
+  document.getElementById('earningsList').innerHTML=html||empty;
+}
 
-  async function loadTransactions() {
-    try {
-      const res = await fetch(`${API}/user/transactions`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const txs = await res.json();
-    } catch (e) {}
-  }
+function switchCat(btn,cat){
+  currentCategory=cat;
+  btn.closest('.tabs-bar').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');loadPlans();
+}
 
-  async function loadTeam() {
-    try {
-      const res = await fetch(`${API}/user/team`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      document.getElementById('myRefCode').value = currentUser.invite_code;
-      document.getElementById('teamCount').textContent = data.team_count;
-      document.getElementById('teamComm').textContent = '₹' + data.total_commission;
-      const teamHtml = data.team.map(m => `<div style="padding: 10px; border-bottom: 1px solid #eee;">${m.phone} - Joined ${new Date(m.created_at).toLocaleDateString()}</div>`).join('');
-      document.getElementById('teamList').innerHTML = teamHtml || '<div style="color: var(--light-text);">No team members yet</div>';
-    } catch (e) {}
-  }
-
-  async function loadPurchases() {
-    try {
-      const res = await fetch(`${API}/user/purchases`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const purchases = await res.json();
-      const html = purchases.map(p => `
-        <div style="padding: 10px; border-bottom: 1px solid #eee;">
-          <strong>${p.plan_name}</strong><br/>
-          Earned: ₹${p.earned_income} / ${p.total_income}<br/>
-          Status: ${p.status}
+async function loadTransactions(){
+  try{
+    const r=await fetch(`${API}/user/transactions`,{headers:{Authorization:`Bearer ${token}`}});
+    const txs=await r.json();
+    const labels={deposit:'💰 Deposit',withdraw:'💸 Withdrawal',earning:'📈 Daily Earning',purchase:'🛒 Purchase',bonus:'🎁 Bonus',withdraw_approved:'✅ Approved'};
+    const html=Array.isArray(txs)&&txs.length?txs.map(t=>{
+      const a=parseFloat(t.amount),col=a>=0?'var(--success)':'var(--danger)';
+      return`<div class="hist-item">
+        <div class="hist-left">
+          <div class="h-type">${labels[t.type]||t.type}</div>
+          <div class="h-sub">${t.description||''}</div>
+          <div class="h-date">${new Date(t.created_at).toLocaleString()}</div>
         </div>
-      `).join('');
-      document.getElementById('purchaseList').innerHTML = html || '<div style="color: var(--light-text);">No purchases yet</div>';
-    } catch (e) {}
-  }
-
-  async function loadBankCards() {
-    try {
-      const res = await fetch(`${API}/user/bank-cards`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const cards = await res.json();
-      const cardsList = cards.map(c => `
-        <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <strong>${c.type === 'bank' ? c.bank_name : 'UPI'}</strong><br/>
-            ${c.type === 'bank' ? c.account_name + ' - ' + c.account_number : c.upi_id}
-          </div>
-          <button onclick="deleteCard(${c.id})" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Delete</button>
+        <div class="hist-right">
+          <div class="h-amt" style="color:${col};">${a>=0?'+':''}₹${Math.abs(a)}</div>
         </div>
-      `).join('');
-      document.getElementById('bankCardsList').innerHTML = cardsList || '<div style="color: var(--light-text);">No cards added</div>';
-      
-      const selectHtml = '<option value="">-- Select Bank Card --</option>' + cards.map(c => `
-        <option value="${c.id}">${c.type === 'bank' ? c.bank_name : 'UPI'} - ${c.type === 'bank' ? c.account_number : c.upi_id}</option>
-      `).join('');
-      document.getElementById('bankCardSelect').innerHTML = selectHtml;
-    } catch (e) {}
-  }
+      </div>`;
+    }).join(''):'<div class="empty-state"><i class="fas fa-inbox"></i><p>No transactions yet</p></div>';
+    const el=document.getElementById('fundingList');if(el)el.innerHTML=html;
+  }catch(e){}
+}
 
-  async function loadCommissions() {
-    try {
-      const res = await fetch(`${API}/user/commissions`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const html = data.commissions.map(c => `
-        <div style="padding: 10px; border-bottom: 1px solid #eee;">
-          From: ${c.from_phone || 'Unknown'}<br/>
-          Amount: ₹${c.amount}<br/>
-          Date: ${new Date(c.created_at).toLocaleDateString()}
+async function loadTeam(){
+  try{
+    const r=await fetch(`${API}/user/team`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await r.json();
+    document.getElementById('teamCount').textContent=d.team_count||0;
+    document.getElementById('teamComm').textContent=parseFloat(d.total_commission||0).toFixed(2);
+    if(document.getElementById('myRefCode'))document.getElementById('myRefCode').value=currentUser?.invite_code||'';
+    const html=d.team&&d.team.length?d.team.map(m=>`<div class="team-member"><div class="team-avatar">${(m.phone||'?')[0]}</div><div class="team-info"><div class="t-phone">${m.phone}</div><div class="t-date">Joined ${new Date(m.created_at).toLocaleDateString()}</div></div></div>`).join(''):'<div class="empty-state"><i class="fas fa-user-friends"></i><p>No team members yet</p></div>';
+    document.getElementById('teamList').innerHTML=html;
+  }catch(e){}
+}
+
+async function loadPurchases(){
+  try{
+    const r=await fetch(`${API}/user/purchases`,{headers:{Authorization:`Bearer ${token}`}});
+    const ps=await r.json();
+    const html=Array.isArray(ps)&&ps.length?ps.map(p=>{
+      const sc=p.status==='active'?'var(--success)':p.status==='completed'?'var(--muted)':'var(--danger)';
+      const pct=p.total_income>0?Math.min(100,Math.round((p.earned_income/p.total_income)*100)):0;
+      return`<div class="c-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <b style="color:var(--text);">${p.name||'Plan'}</b>
+          <span class="badge ${p.status}">${p.status}</span>
         </div>
-      `).join('');
-      document.getElementById('commissionList').innerHTML = html || '<div style="color: var(--light-text);">No commissions yet</div>';
-    } catch (e) {}
-  }
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Earned: <b style="color:var(--success);">₹${p.earned_income||0}</b> / ₹${p.total_income}</div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <div style="font-size:11px;color:var(--muted);">Daily: ₹${p.daily_income} · ${p.days_remaining||0} days left · ${new Date(p.purchase_date).toLocaleDateString()}</div>
+      </div>`;
+    }).join(''):'<div class="empty-state"><i class="fas fa-shopping-bag"></i><p>No purchases yet</p></div>';
+    const el=document.getElementById('purchaseList');if(el)el.innerHTML=html;
+  }catch(e){}
+}
 
-  function updateUI() {
-    if (!currentUser) return;
-    document.getElementById('rechargeBalance').textContent = '₹' + currentUser.balance;
-    document.getElementById('withdrawBalance').textContent = '₹' + currentUser.withdraw_balance;
-    document.getElementById('totalRecharge').textContent = '₹' + currentUser.total_recharge;
-    document.getElementById('totalWithdraw').textContent = '₹' + currentUser.total_withdraw;
-    document.getElementById('profileName').textContent = currentUser.name || 'User';
-    document.getElementById('profilePhone').textContent = currentUser.phone;
-    document.getElementById('userId').textContent = currentUser.id;
-    document.getElementById('userCode').textContent = currentUser.invite_code;
-  }
-
-  // Navigation
-  function goToPage(page) {
-    const target = document.getElementById('page-' + page);
-    if (!target) return;
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    target.classList.add('active');
-    document.getElementById('app').classList.remove('hidden');
-    target.scrollTo?.(0, 0);
-    document.querySelector('.app-container')?.scrollTo(0, 0);
-  }
-
-  function navTo(page) {
-    goToPage(page);
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    event.target.closest('.nav-item').classList.add('active');
-  }
-
-  function switchCategory(cat) {
-    currentCategory = cat;
-    event.target.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    loadPlans();
-  }
-
-  // Auth
-  async function handleLogin() {
-    const phone = document.getElementById('loginPhone').value;
-    const password = document.getElementById('loginPassword').value;
-    if (!phone || !password) return alert('Enter phone and password');
-    
-    try {
-      const res = await fetch(`${API}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, password })
-      });
-      const data = await res.json();
-      if (data.error) return showError('loginError', data.error);
-      token = data.token;
-      localStorage.setItem('gp_token', token);
-      currentUser = data.user;
-      await loadUserProfile();
-      showApp();
-      loadDashboard();
-    } catch (e) { showError('loginError', 'Login failed'); }
-  }
-
-  function toggleRegister() {
-    document.getElementById('registerForm').classList.toggle('hidden');
-    event.preventDefault();
-  }
-
-  async function handleRegister() {
-    const phone = document.getElementById('regPhone').value;
-    const password = document.getElementById('regPassword').value;
-    const confirm = document.getElementById('regConfirm').value;
-    const invite = document.getElementById('inviteCode').value;
-    const agree = document.getElementById('agreeTerms').checked;
-
-    if (!phone || !password) return alert('Enter phone and password');
-    if (password !== confirm) return showError('registerError', 'Passwords do not match');
-    if (password.length < 6) return showError('registerError', 'Password must be 6+ characters');
-    if (!agree) return alert('Please agree to terms');
-
-    try {
-      const res = await fetch(`${API}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, password, invite_code: invite || null })
-      });
-      const data = await res.json();
-      if (data.error) return showError('registerError', data.error);
-      showSuccess('registerSuccess', 'Registration successful! Logging in...');
-      setTimeout(async () => {
-        token = data.token;
-        localStorage.setItem('gp_token', token);
-        currentUser = data.user;
-        await loadUserProfile();
-        showApp();
-        loadDashboard();
-      }, 1500);
-    } catch (e) { showError('registerError', 'Registration failed'); }
-  }
-
-  function handleLogout() {
-    if (confirm('Are you sure you want to logout?')) {
-      localStorage.removeItem('gp_token');
-      token = null;
-      currentUser = null;
-      location.reload();
-    }
-  }
-
-  // Modals
-  let selectedPlanId = null;
-  function openBuyModal(planId) {
-    const plan = allPlans.find(p => p.id === planId);
-    if (!plan) return;
-    selectedPlanId = planId;
-    document.getElementById('buyPlanName').textContent = plan.name;
-    document.getElementById('buyPrice').textContent = plan.price;
-    document.getElementById('buyIncome').textContent = plan.total_income;
-    document.getElementById('buyDaily').textContent = plan.daily_income;
-    document.getElementById('buyCycle').textContent = plan.cycle_days;
-    document.getElementById('buyModal').classList.add('active');
-  }
-
-  function closeBuyModal() {
-    document.getElementById('buyModal').classList.remove('active');
-  }
-
-  async function goToPayment() {
-    const plan = allPlans.find(p => p.id === selectedPlanId);
-    if (!plan) return;
-    
-    closeBuyModal();
-    goToPage('checkout');
-    
-    // Set checkout details
-    document.getElementById('checkoutAmount').textContent = plan.price;
-    document.getElementById('manualAmount').textContent = plan.price;
-    document.getElementById('transactionRef').value = '';
-    document.getElementById('paymentProof').value = '';
-    document.getElementById('paymentQR').innerHTML = `
-      <div style="text-align: center; color: var(--light-text);">
-        <i class="fas fa-qrcode" style="font-size: 50px; opacity: 0.3;"></i>
-        <div style="margin-top: 10px;">Loading QR...</div>
+async function loadDepositHistory(){
+  try{
+    const r=await fetch(`${API}/deposits`,{headers:{Authorization:`Bearer ${token}`}});
+    const ds=await r.json();
+    const html=Array.isArray(ds)&&ds.length?ds.map(d=>`<div class="hist-item">
+      <div class="hist-left">
+        <div class="h-type">💰 Deposit</div>
+        <div class="h-sub">${d.payment_method||'UPI'}${d.transaction_id?' · UTR: '+d.transaction_id:''}</div>
+        <div class="h-date">${new Date(d.created_at).toLocaleString()}</div>
       </div>
-    `;
-    
-    // Load UPI details
-    try {
-      const res = await fetch(`${API}/settings`);
-      const settings = await res.json();
-      document.getElementById('paymentUPI').textContent = settings.upi_id || 'greenpower@upi';
-    } catch (e) {}
-    
-    // Generate QR Code
-    try {
-      const res = await fetch(`${API}/payment-qr/${plan.price}`);
-      const data = await res.json();
-      if (data.qr) {
-        document.getElementById('paymentQR').innerHTML = `<img src="${data.qr}" style="width: 250px; height: 250px; border-radius: 10px;" />`;
-      } else {
-        document.getElementById('paymentQR').innerHTML = `
-          <div style="text-align: center; color: var(--light-text); padding: 20px;">
-            <i class="fas fa-qrcode" style="font-size: 50px; opacity: 0.3;"></i>
-            <div style="margin-top: 10px; font-weight: 600;">QR unavailable</div>
-            <div style="font-size: 12px; margin-top: 6px;">Use the UPI ID below</div>
-          </div>
-        `;
-      }
-    } catch (e) {
-      document.getElementById('paymentQR').innerHTML = `
-        <div style="text-align: center; color: var(--light-text); padding: 20px;">
-          <i class="fas fa-qrcode" style="font-size: 50px; opacity: 0.3;"></i>
-          <div style="margin-top: 10px; font-weight: 600;">QR unavailable</div>
-          <div style="font-size: 12px; margin-top: 6px;">Use the UPI ID below</div>
+      <div class="hist-right">
+        <div class="h-amt" style="color:var(--success);">+₹${d.amount}</div>
+        <div><span class="badge ${d.status}">${d.status.toUpperCase()}</span></div>
+      </div>
+    </div>`).join(''):'<div class="empty-state"><i class="fas fa-arrow-circle-down"></i><p>No deposits yet</p></div>';
+    const el=document.getElementById('depositHistoryList');if(el)el.innerHTML=html;
+  }catch(e){}
+}
+
+async function loadWithdrawHistory(){
+  try{
+    const r=await fetch(`${API}/withdrawals`,{headers:{Authorization:`Bearer ${token}`}});
+    const ws=await r.json();
+    const html=Array.isArray(ws)&&ws.length?ws.map(w=>{
+      const method=w.upi_id?'UPI: '+w.upi_id:(w.account_number?'Bank: ****'+w.account_number.slice(-4):'--');
+      return`<div class="hist-item">
+        <div class="hist-left">
+          <div class="h-type">💸 Withdrawal</div>
+          <div class="h-sub">${method}</div>
+          <div class="h-date">${new Date(w.created_at).toLocaleString()}</div>
+          ${w.note?`<div style="font-size:11px;color:var(--danger);">Note: ${w.note}</div>`:''}
         </div>
-      `;
-    }
-  }
+        <div class="hist-right">
+          <div class="h-amt" style="color:var(--danger);">-₹${w.amount}</div>
+          <div><span class="badge ${w.status}">${w.status.toUpperCase()}</span></div>
+        </div>
+      </div>`;
+    }).join(''):'<div class="empty-state"><i class="fas fa-arrow-circle-up"></i><p>No withdrawals yet</p></div>';
+    const el=document.getElementById('withdrawHistoryList');if(el)el.innerHTML=html;
+  }catch(e){}
+}
 
-  async function submitPaymentProof() {
-    const txRef = document.getElementById('transactionRef').value.trim();
-    const proof = document.getElementById('paymentProof').files[0];
-    const plan = allPlans.find(p => p.id === selectedPlanId);
+async function loadBankCards(){
+  try{
+    const r=await fetch(`${API}/user/bank-cards`,{headers:{Authorization:`Bearer ${token}`}});
+    const cs=await r.json();
+    const html=cs.map(c=>`<div class="c-card" style="display:flex;justify-content:space-between;align-items:center;padding:14px;">
+      <div>
+        <b style="color:var(--text);">${c.type==='bank'?c.bank_name:'UPI'}</b><br>
+        <span style="font-size:12px;color:var(--muted);">${c.type==='bank'?c.account_name+' - '+c.account_number:c.upi_id}</span>
+      </div>
+      <button onclick="deleteCard(${c.id})" class="btn btn-danger" style="padding:6px 12px;font-size:12px;">Delete</button>
+    </div>`).join('');
+    document.getElementById('bankCardsList').innerHTML=html||'<div class="empty-state"><i class="fas fa-credit-card"></i><p>No cards added</p></div>';
+    const sel='<option value="">-- Select Bank Card --</option>'+cs.map(c=>`<option value="${c.id}">${c.type==='bank'?c.bank_name:'UPI'} - ${c.type==='bank'?c.account_number:c.upi_id}</option>`).join('');
+    document.getElementById('bankCardSelect').innerHTML=sel;
+  }catch(e){}
+}
 
-    if (!txRef) return alert('Enter UTR ID');
-    if (!proof) return alert('Upload payment screenshot');
-    if (!plan) return alert('Plan not found');
+async function loadCommissions(){
+  try{
+    const r=await fetch(`${API}/user/commissions`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await r.json();
+    const html=d.commissions&&d.commissions.length?d.commissions.map(c=>`<div class="hist-item">
+      <div class="hist-left"><div class="h-type">🎁 Commission</div><div class="h-sub">From: ${c.from_phone||'Unknown'}</div><div class="h-date">${new Date(c.created_at).toLocaleDateString()}</div></div>
+      <div class="hist-right"><div class="h-amt" style="color:var(--success);">+₹${c.amount}</div></div>
+    </div>`).join(''):'<div class="empty-state"><i class="fas fa-star"></i><p>No commissions yet</p></div>';
+    const el=document.getElementById('commissionList');if(el)el.innerHTML=html;
+  }catch(e){}
+}
 
-    const formData = new FormData();
-    formData.append('amount', plan.price);
-    formData.append('payment_method', 'UPI');
-    formData.append('transaction_id', txRef);
-    formData.append('proof', proof);
+// NAV
+function goToPage(page){
+  document.querySelectorAll('#app .page').forEach(p=>p.classList.remove('active'));
+  const t=document.getElementById('page-'+page);if(!t)return;
+  t.classList.add('active');
+  document.querySelector('.app-body')?.scrollTo(0,0);
+  if(page==='purchase-history')loadPurchases();
+  else if(page==='deposit-history')loadDepositHistory();
+  else if(page==='withdraw-history')loadWithdrawHistory();
+  else if(page==='funding')loadTransactions();
+  else if(page==='commissions')loadCommissions();
+  else if(page==='bank-cards')loadBankCards();
+  else if(page==='team')loadTeam();
+  else if(page==='home'){loadUserProfile();loadPlans();}
+}
 
-    try {
-      const res = await fetch(`${API}/deposits`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      const data = await res.json();
-      if (data.error) return alert(data.error);
-      
-      alert('✅ Payment submitted! After admin approval, balance will be added.\n\nYou can then purchase the plan.');
-      goToPage('home');
-      document.getElementById('transactionRef').value = '';
-      document.getElementById('paymentProof').value = '';
-      await loadUserProfile();
-    } catch (e) { alert('Error submitting payment proof'); }
-  }
+function navTo(page,btn){
+  goToPage(page);
+  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
 
-  async function executePurchase() {
-    try {
-      const res = await fetch(`${API}/plans/purchase`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan_id: selectedPlanId })
-      });
-      const data = await res.json();
-      if (data.error) return alert(data.error);
-      alert('Plan purchased successfully!');
-      closeBuyModal();
-      await loadUserProfile();
-      loadPurchases();
-    } catch (e) { alert('Purchase failed'); }
-  }
+// AUTH
+async function handleLogin(){
+  hideEl('loginError');
+  const phone=document.getElementById('loginPhone').value;
+  const password=document.getElementById('loginPassword').value;
+  if(!phone||!password)return showErrEl('loginError','Enter phone and password');
+  try{
+    const r=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password})});
+    const d=await r.json();
+    if(d.error)return showErrEl('loginError',d.error);
+    token=d.token;localStorage.setItem('gp_token',token);currentUser=d.user;
+    await loadUserProfile();showApp();loadDashboard();
+  }catch(e){showErrEl('loginError','Login failed');}
+}
 
-  function openRechargeModal() {
-    document.getElementById('rechargeModal').classList.add('active');
-  }
+async function handleRegister(){
+  hideEl('registerError');hideEl('registerSuccess');
+  const phone=document.getElementById('regPhone').value;
+  const password=document.getElementById('regPassword').value;
+  const confirm=document.getElementById('regConfirm').value;
+  const invite=document.getElementById('inviteCode').value;
+  const agree=document.getElementById('agreeTerms').checked;
+  if(!phone||!password)return showErrEl('registerError','Enter phone and password');
+  if(password!==confirm)return showErrEl('registerError','Passwords do not match');
+  if(password.length<6)return showErrEl('registerError','Password must be 6+ characters');
+  if(!agree)return showErrEl('registerError','Please agree to terms');
+  try{
+    const r=await fetch(`${API}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password,invite_code:invite||null})});
+    const d=await r.json();
+    if(d.error)return showErrEl('registerError',d.error);
+    document.getElementById('registerSuccess').textContent='Registration successful! Logging in...';
+    document.getElementById('registerSuccess').classList.remove('hidden');
+    setTimeout(async()=>{token=d.token;localStorage.setItem('gp_token',token);currentUser=d.user;await loadUserProfile();showApp();loadDashboard();},1500);
+  }catch(e){showErrEl('registerError','Registration failed');}
+}
 
-  function closeRechargeModal() {
-    document.getElementById('rechargeModal').classList.remove('active');
-    document.getElementById('rechargeAmount').value = '';
-    document.getElementById('transactionId').value = '';
-    document.getElementById('proofImage').value = '';
-  }
+function handleLogout(){if(confirm('Are you sure?')){localStorage.removeItem('gp_token');location.reload();}}
 
-  async function submitRecharge() {
-    const amount = document.getElementById('rechargeAmount').value;
-    const method = document.getElementById('paymentMethod').value;
-    const txId = document.getElementById('transactionId').value;
-    const proof = document.getElementById('proofImage').files[0];
+// PLANS
+let selectedPlanId=null;
+function openBuyModal(id){
+  const p=allPlans.find(x=>x.id===id);if(!p)return;
+  selectedPlanId=id;
+  document.getElementById('buyPlanName').textContent=p.name;
+  document.getElementById('buyPrice').textContent=p.price;
+  document.getElementById('buyIncome').textContent=p.total_income;
+  document.getElementById('buyDaily').textContent=p.daily_income;
+  document.getElementById('buyCycle').textContent=p.cycle_days;
+  document.getElementById('buyModal').classList.add('active');
+}
+function closeBuyModal(){document.getElementById('buyModal').classList.remove('active');}
 
-    if (!amount || amount <= 0) return showError('rechargeError', 'Enter valid amount');
+async function goToPayment(){
+  const p=allPlans.find(x=>x.id===selectedPlanId);if(!p)return;
+  closeBuyModal();
+  document.getElementById('page-checkout').classList.remove('hidden');
+  document.querySelectorAll('#app .page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-checkout').classList.add('active');
+  document.getElementById('checkoutAmount').textContent=p.price;
+  document.getElementById('manualAmount').textContent=p.price;
+  document.getElementById('transactionRef').value='';
+  document.getElementById('paymentProof').value='';
+  document.getElementById('paymentUPI').textContent=settings.upi_id||'greenpower@upi';
+  document.getElementById('paymentQR').innerHTML='<div style="text-align:center;color:var(--muted);"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;font-size:13px;">Loading QR...</div></div>';
+  try{
+    const r=await fetch(`${API}/payment-qr/${p.price}`);
+    const d=await r.json();
+    if(d.qr)document.getElementById('paymentQR').innerHTML=`<img src="${d.qr}" style="width:220px;height:220px;border-radius:10px;">`;
+    else document.getElementById('paymentQR').innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;font-size:13px;">QR unavailable — use UPI ID below</div></div>';
+  }catch(e){document.getElementById('paymentQR').innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;font-size:13px;">QR unavailable</div></div>';}
+}
 
-    const formData = new FormData();
-    formData.append('amount', amount);
-    formData.append('payment_method', method);
-    formData.append('transaction_id', txId);
-    if (proof) formData.append('proof', proof);
+async function submitPaymentProof(){
+  const tx=document.getElementById('transactionRef').value.trim();
+  const proof=document.getElementById('paymentProof').files[0];
+  const p=allPlans.find(x=>x.id===selectedPlanId);
+  if(!tx)return showToast('⚠️ Enter UTR ID');
+  if(!proof)return showToast('⚠️ Upload payment screenshot');
+  if(!p)return showToast('⚠️ Plan not found');
+  const fd=new FormData();
+  fd.append('amount',p.price);fd.append('payment_method','UPI');fd.append('transaction_id',tx);fd.append('proof',proof);
+  try{
+    const r=await fetch(`${API}/deposits`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await r.json();
+    if(d.error)return showToast('❌ '+d.error);
+    showToast('✅ Payment submitted! Awaiting admin approval.');
+    goToPage('home');await loadUserProfile();
+  }catch(e){showToast('❌ Error submitting proof');}
+}
 
-    try {
-      const res = await fetch(`${API}/deposits`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      const data = await res.json();
-      if (data.error) return showError('rechargeError', data.error);
-      alert('Deposit request submitted! Pending approval.');
-      closeRechargeModal();
-    } catch (e) { showError('rechargeError', 'Error submitting deposit'); }
-  }
+// RECHARGE
+function openRechargeModal(){hideEl('rechargeError');document.getElementById('rechargeModal').classList.add('active');}
+function closeRechargeModal(){document.getElementById('rechargeModal').classList.remove('active');document.getElementById('rechargeAmount').value='';document.getElementById('transactionId').value='';document.getElementById('proofImage').value='';}
+async function submitRecharge(){
+  const amount=document.getElementById('rechargeAmount').value;
+  if(!amount||amount<=0)return showErrEl('rechargeError','Enter valid amount');
+  const fd=new FormData();fd.append('amount',amount);fd.append('payment_method',document.getElementById('paymentMethod').value);fd.append('transaction_id',document.getElementById('transactionId').value);
+  const proof=document.getElementById('proofImage').files[0];if(proof)fd.append('proof',proof);
+  try{
+    const r=await fetch(`${API}/deposits`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await r.json();if(d.error)return showErrEl('rechargeError',d.error);
+    showToast('✅ Deposit submitted! Pending approval.');closeRechargeModal();
+  }catch(e){showErrEl('rechargeError','Error submitting deposit');}
+}
 
-  function openWithdrawModal() {
-    document.getElementById('withdrawModal').classList.add('active');
-  }
+// WITHDRAW
+function openWithdrawModal(){hideEl('withdrawError');document.getElementById('withdrawModal').classList.add('active');}
+function closeWithdrawModal(){document.getElementById('withdrawModal').classList.remove('active');document.getElementById('withdrawAmount').value='';}
+async function submitWithdraw(){
+  const amount=document.getElementById('withdrawAmount').value;
+  const cardId=document.getElementById('bankCardSelect').value;
+  if(!amount||amount<=0)return showErrEl('withdrawError','Enter valid amount');
+  if(!cardId)return showErrEl('withdrawError','Select a bank card');
+  try{
+    const r=await fetch(`${API}/withdrawals`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(amount),bank_card_id:parseInt(cardId)})});
+    const d=await r.json();if(d.error)return showErrEl('withdrawError',d.error);
+    showToast('✅ Withdrawal requested! Processing in 24 hours.');
+    closeWithdrawModal();await loadUserProfile();
+    // Auto-load withdrawal history so it's fresh
+    loadWithdrawHistory();
+  }catch(e){showErrEl('withdrawError','Error submitting withdrawal');}
+}
 
-  function closeWithdrawModal() {
-    document.getElementById('withdrawModal').classList.remove('active');
-    document.getElementById('withdrawAmount').value = '';
-  }
+// BANK CARDS
+function openAddCardModal(){hideEl('addCardError');document.getElementById('addCardModal').classList.add('active');}
+function closeAddCardModal(){document.getElementById('addCardModal').classList.remove('active');['bankName','accountName','accountNumber','ifsc','upiId'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});}
+async function submitAddCard(){
+  const type=document.getElementById('cardType').value;
+  const data={type,bank_name:document.getElementById('bankName').value,account_name:document.getElementById('accountName').value,account_number:document.getElementById('accountNumber').value,ifsc:document.getElementById('ifsc').value,upi_id:document.getElementById('upiId').value};
+  try{
+    const r=await fetch(`${API}/user/bank-cards`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const result=await r.json();if(result.error)return showErrEl('addCardError',result.error);
+    showToast('✅ Card added successfully!');closeAddCardModal();loadBankCards();
+  }catch(e){showErrEl('addCardError','Error adding card');}
+}
+async function deleteCard(id){
+  if(!confirm('Delete this card?'))return;
+  try{await fetch(`${API}/user/bank-cards/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});loadBankCards();}catch(e){}
+}
 
-  async function submitWithdraw() {
-    const amount = document.getElementById('withdrawAmount').value;
-    const cardId = document.getElementById('bankCardSelect').value;
+// AVATAR
+async function uploadAvatar(input){
+  const file=input.files[0];if(!file)return;
+  const s=document.getElementById('avatarStatus');s.style.display='block';s.textContent='Uploading...';s.style.color='var(--primary)';
+  const fd=new FormData();fd.append('avatar',file);
+  try{
+    const r=await fetch(`${API}/user/profile`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await r.json();
+    if(d.success&&d.user){currentUser={...currentUser,...d.user};updateUI();s.textContent='✅ Photo updated!';s.style.color='var(--success)';}
+    else{s.textContent='Upload failed';s.style.color='var(--danger)';}
+  }catch(e){s.textContent='Upload failed';s.style.color='var(--danger)';}
+  setTimeout(()=>{s.style.display='none';},2000);input.value='';
+}
 
-    if (!amount || amount <= 0) return showError('withdrawError', 'Enter valid amount');
-    if (!cardId) return showError('withdrawError', 'Select a bank card');
-
-    try {
-      const res = await fetch(`${API}/withdrawals`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseFloat(amount), bank_card_id: parseInt(cardId) })
-      });
-      const data = await res.json();
-      if (data.error) return showError('withdrawError', data.error);
-      alert('Withdrawal request submitted! Processing in 24 hours.');
-      closeWithdrawModal();
-      await loadUserProfile();
-    } catch (e) { showError('withdrawError', 'Error submitting withdrawal'); }
-  }
-
-  function openAddCardModal() {
-    document.getElementById('addCardModal').classList.add('active');
-  }
-
-  function closeAddCardModal() {
-    document.getElementById('addCardModal').classList.remove('active');
-    document.getElementById('bankName').value = '';
-    document.getElementById('accountName').value = '';
-    document.getElementById('accountNumber').value = '';
-    document.getElementById('ifsc').value = '';
-    document.getElementById('upiId').value = '';
-  }
-
-  async function submitAddCard() {
-    const type = document.getElementById('cardType').value;
-    const data = {
-      type,
-      bank_name: document.getElementById('bankName').value,
-      account_name: document.getElementById('accountName').value,
-      account_number: document.getElementById('accountNumber').value,
-      ifsc: document.getElementById('ifsc').value,
-      upi_id: document.getElementById('upiId').value
-    };
-
-    try {
-      const res = await fetch(`${API}/user/bank-cards`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      const result = await res.json();
-      if (result.error) return alert(result.error);
-      alert('Card added successfully!');
-      closeAddCardModal();
-      loadBankCards();
-    } catch (e) { alert('Error adding card'); }
-  }
-
-  async function deleteCard(id) {
-    if (!confirm('Delete this card?')) return;
-    try {
-      await fetch(`${API}/user/bank-cards/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      loadBankCards();
-    } catch (e) {}
-  }
-
-  function copyRefCode() {
-    const code = document.getElementById('myRefCode').value || currentUser.invite_code;
-    navigator.clipboard.writeText(code);
-    alert('Referral code copied: ' + code);
-  }
-
-  function shareCode() {
-    const code = currentUser.invite_code;
-    if (navigator.share) {
-      navigator.share({ title: 'Green Power', text: 'Join Green Power with my code: ' + code });
-    } else {
-      alert('My Referral Code: ' + code);
-    }
-  }
-
-  function showApp() {
-    document.getElementById('page-login').classList.remove('active');
-    document.getElementById('app').classList.remove('hidden');
-    if (!document.querySelector('#app .page.active') && !document.getElementById('page-checkout').classList.contains('active')) {
-      document.getElementById('page-home').classList.add('active');
-    }
-  }
-
-  function showLogin() {
-    document.getElementById('page-login').classList.add('active');
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('page-checkout').classList.remove('active');
-  }
-
-  function showError(elemId, msg) {
-    const elem = document.getElementById(elemId);
-    if (elem) {
-      elem.textContent = msg;
-      elem.classList.remove('hidden');
-    }
-  }
-
-  function showSuccess(elemId, msg) {
-    const elem = document.getElementById(elemId);
-    if (elem) {
-      elem.textContent = msg;
-      elem.classList.remove('hidden');
-    }
-  }
+// UTILS
+function copyRefCode(){const code=currentUser?.invite_code||'';navigator.clipboard?.writeText(code);showToast('✅ Code copied: '+code);}
+function shareCode(){const code=currentUser?.invite_code||'';if(navigator.share){navigator.share({title:'Green Power',text:'Join Green Power with my code: '+code});}else{showToast('My Code: '+code);}}
 </script>
-
 </body>
 </html>
