@@ -361,10 +361,16 @@ initSqlJs({ locateFile: (file) => `node_modules/sql.js/dist/${file}` }).then(asy
     res.json({ ...user, team_count: team.count, total_earned: earned.total });
   });
 
-  app.put('/api/user/profile', auth, (req, res) => {
+  app.put('/api/user/profile', auth, upload.single('avatar'), (req, res) => {
     const { name } = req.body;
-    db.prepare('UPDATE users SET name = ? WHERE id = ?').run(name, req.user.id);
-    res.json({ success: true });
+    const avatar = req.file ? `/uploads/${req.file.filename}` : null;
+    if (avatar) {
+      db.prepare('UPDATE users SET name = COALESCE(?, name), avatar = ? WHERE id = ?').run(name || null, avatar, req.user.id);
+    } else {
+      db.prepare('UPDATE users SET name = COALESCE(?, name) WHERE id = ?').run(name || null, req.user.id);
+    }
+    const user = db.prepare('SELECT id, phone, name, avatar, invite_code, balance, withdraw_balance, total_recharge, total_withdraw, vip_level FROM users WHERE id = ?').get(req.user.id);
+    res.json({ success: true, user });
   });
 
   app.get('/api/user/purchases', auth, (req, res) => {
@@ -774,5 +780,3 @@ app.listen(PORT, '0.0.0.0', () => {
 
 // initDatabase removed (server DB init runs inside initSqlJs().then(...))
 });
-
-

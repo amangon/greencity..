@@ -297,9 +297,17 @@
     <!-- MINE PAGE -->
     <div id="page-mine" class="page">
       <div class="card" style="text-align: center; padding: 20px;">
-        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--dark)); margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px;">
-          <i class="fas fa-user"></i>
+        <div style="position:relative; width:80px; margin: 0 auto 12px;" onclick="document.getElementById('avatarInput').click()" title="Tap to change photo">
+          <div id="avatarCircle" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--dark));display:flex;align-items:center;justify-content:center;color:white;font-size:34px;overflow:hidden;cursor:pointer;border:3px solid var(--primary);">
+            <i class="fas fa-user" id="avatarIcon"></i>
+            <img id="avatarImg" src="" style="display:none;width:80px;height:80px;object-fit:cover;border-radius:50%;" />
+          </div>
+          <div style="position:absolute;bottom:0;right:0;width:24px;height:24px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;cursor:pointer;">
+            <i class="fas fa-camera" style="font-size:11px;color:white;"></i>
+          </div>
         </div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)" />
+        <div id="avatarUploadStatus" style="font-size:11px;color:var(--primary);margin-bottom:6px;display:none;">Uploading...</div>
         <div style="font-size: 16px; color: var(--text); font-weight: 600; margin-bottom: 5px;" id="profileName">User</div>
         <div style="font-size: 12px; color: var(--light-text);" id="profilePhone"></div>
       </div>
@@ -331,27 +339,35 @@
 
       <div class="card">
         <div style="display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; font-size: 11px;">
-          <div style="text-align: center; padding: 10px;" onclick="goToPage('purchase-history')">
+          <div style="text-align: center; padding: 10px; cursor:pointer;" onclick="goToPage('purchase-history')">
             <i class="fas fa-shopping-bag" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
             <span>Purchase<br/>History</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="goToPage('funding')">
-            <i class="fas fa-shield-alt" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
-            <span>Funding<br/>Details</span>
+          <div style="text-align: center; padding: 10px; cursor:pointer;" onclick="goToPage('deposit-history')">
+            <i class="fas fa-arrow-circle-down" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
+            <span>Deposit<br/>History</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="goToPage('bank-cards')">
+          <div style="text-align: center; padding: 10px; cursor:pointer;" onclick="goToPage('withdraw-history')">
+            <i class="fas fa-arrow-circle-up" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
+            <span>Withdrawal<br/>History</span>
+          </div>
+          <div style="text-align: center; padding: 10px; cursor:pointer;" onclick="goToPage('funding')">
+            <i class="fas fa-list-alt" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
+            <span>All<br/>Transactions</span>
+          </div>
+          <div style="text-align: center; padding: 10px; cursor:pointer;" onclick="goToPage('bank-cards')">
             <i class="fas fa-credit-card" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
             <span>Bank Card<br/>Manager</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="navTo('team')">
+          <div style="text-align: center; padding: 10px; cursor:pointer;" onclick="navTo('team')">
             <i class="fas fa-users" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
             <span>Team<br/>Members</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="goToPage('commissions')">
+          <div style="text-align: center; padding: 10px; cursor:pointer;" onclick="goToPage('commissions')">
             <i class="fas fa-star" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
             <span>Commission<br/>Record</span>
           </div>
-          <div style="text-align: center; padding: 10px;" onclick="shareCode()">
+          <div style="text-align: center; padding: 10px; cursor:pointer;" onclick="shareCode()">
             <i class="fas fa-share-alt" style="font-size: 24px; color: var(--primary); margin-bottom: 5px; display: block;"></i>
             <span>Share<br/>Code</span>
           </div>
@@ -363,7 +379,7 @@
 
     <!-- PURCHASE HISTORY -->
     <div id="page-purchase-history" class="page">
-      <div class="card" style="padding: 20px; text-align: center;">
+      <div class="card" style="padding: 20px;">
         <h3 style="color: var(--text); margin-bottom: 15px;">
           <a href="#" onclick="goToPage('mine')" style="text-decoration: none; color: var(--text);">← Back</a>
           <span style="margin-left: 10px;">Purchase History</span>
@@ -372,12 +388,34 @@
       </div>
     </div>
 
+    <!-- DEPOSIT HISTORY -->
+    <div id="page-deposit-history" class="page">
+      <div class="card" style="padding: 20px;">
+        <h3 style="color: var(--text); margin-bottom: 15px;">
+          <a href="#" onclick="goToPage('mine')" style="text-decoration: none; color: var(--text);">← Back</a>
+          <span style="margin-left: 10px;">Deposit History</span>
+        </h3>
+        <div id="depositHistoryList" style="font-size: 13px;"></div>
+      </div>
+    </div>
+
+    <!-- WITHDRAWAL HISTORY -->
+    <div id="page-withdraw-history" class="page">
+      <div class="card" style="padding: 20px;">
+        <h3 style="color: var(--text); margin-bottom: 15px;">
+          <a href="#" onclick="goToPage('mine')" style="text-decoration: none; color: var(--text);">← Back</a>
+          <span style="margin-left: 10px;">Withdrawal History</span>
+        </h3>
+        <div id="withdrawHistoryList" style="font-size: 13px;"></div>
+      </div>
+    </div>
+
     <!-- FUNDING DETAILS -->
     <div id="page-funding" class="page">
       <div class="card" style="padding: 20px;">
         <h3 style="color: var(--text); margin-bottom: 15px;">
           <a href="#" onclick="goToPage('mine')" style="text-decoration: none; color: var(--text);">← Back</a>
-          <span style="margin-left: 10px;">Funding Details</span>
+          <span style="margin-left: 10px;">All Transactions</span>
         </h3>
         <div id="fundingList" style="font-size: 13px;"></div>
       </div>
@@ -749,15 +787,72 @@
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const purchases = await res.json();
-      const html = purchases.map(p => `
-        <div style="padding: 10px; border-bottom: 1px solid #eee;">
-          <strong>${p.plan_name}</strong><br/>
-          Earned: ₹${p.earned_income} / ${p.total_income}<br/>
-          Status: ${p.status}
-        </div>
-      `).join('');
-      document.getElementById('purchaseList').innerHTML = html || '<div style="color: var(--light-text);">No purchases yet</div>';
-    } catch (e) {}
+      const html = Array.isArray(purchases) && purchases.length ? purchases.map(p => {
+        const statusColor = p.status === 'active' ? 'var(--success)' : p.status === 'completed' ? '#888' : '#e74c3c';
+        const pct = p.total_income > 0 ? Math.min(100, Math.round((p.earned_income / p.total_income) * 100)) : 0;
+        return '<div style="padding:12px;border-bottom:1px solid #eee;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+          '<strong style="font-size:13px;color:var(--text);">' + (p.name || p.plan_name || 'Plan') + '</strong>' +
+          '<span style="font-size:11px;font-weight:700;color:' + statusColor + ';background:#f0f0f0;padding:2px 8px;border-radius:10px;">' + p.status + '</span>' +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--light-text);margin-bottom:4px;">Earned: <strong style="color:var(--success);">₹' + (p.earned_income||0) + '</strong> / ₹' + p.total_income + '</div>' +
+          '<div style="background:#eee;border-radius:10px;height:6px;margin-bottom:4px;"><div style="background:var(--primary);width:' + pct + '%;height:6px;border-radius:10px;"></div></div>' +
+          '<div style="font-size:11px;color:var(--light-text);">Daily: ₹' + p.daily_income + ' | Days left: ' + (p.days_remaining||0) + ' | Purchased: ' + new Date(p.purchase_date).toLocaleDateString() + '</div>' +
+          '</div>';
+      }).join('') : '<div style="text-align:center;color:var(--light-text);padding:20px;">No purchases yet</div>';
+      const el = document.getElementById('purchaseList');
+      if (el) el.innerHTML = html;
+    } catch (e) { console.error('loadPurchases error', e); }
+  }
+
+  async function loadDepositHistory() {
+    try {
+      const res = await fetch(`${API}/deposits`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const deposits = await res.json();
+      const html = Array.isArray(deposits) && deposits.length ? deposits.map(d => {
+        const statusColor = d.status === 'approved' ? 'var(--success)' : d.status === 'pending' ? '#f39c12' : 'var(--danger)';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #eee;">' +
+          '<div>' +
+          '<div style="font-weight:600;font-size:13px;color:var(--text);">💰 Deposit</div>' +
+          '<div style="font-size:11px;color:var(--light-text);margin-top:2px;">' + (d.payment_method||'UPI') + (d.transaction_id ? ' · UTR: ' + d.transaction_id : '') + '</div>' +
+          '<div style="font-size:11px;color:var(--light-text);">' + new Date(d.created_at).toLocaleString() + '</div>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+          '<div style="font-size:15px;font-weight:700;color:var(--success);">+₹' + d.amount + '</div>' +
+          '<div style="font-size:11px;font-weight:700;color:' + statusColor + ';margin-top:2px;">' + d.status.toUpperCase() + '</div>' +
+          '</div></div>';
+      }).join('') : '<div style="text-align:center;color:var(--light-text);padding:20px;">No deposits yet</div>';
+      const el = document.getElementById('depositHistoryList');
+      if (el) el.innerHTML = html;
+    } catch (e) { console.error('loadDepositHistory error', e); }
+  }
+
+  async function loadWithdrawHistory() {
+    try {
+      const res = await fetch(`${API}/withdrawals`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const withdrawals = await res.json();
+      const html = Array.isArray(withdrawals) && withdrawals.length ? withdrawals.map(w => {
+        const statusColor = w.status === 'approved' ? 'var(--success)' : w.status === 'pending' ? '#f39c12' : 'var(--danger)';
+        const method = w.upi_id ? 'UPI: ' + w.upi_id : (w.account_number ? 'Bank: ****' + w.account_number.slice(-4) : '--');
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #eee;">' +
+          '<div>' +
+          '<div style="font-weight:600;font-size:13px;color:var(--text);">💸 Withdrawal</div>' +
+          '<div style="font-size:11px;color:var(--light-text);margin-top:2px;">' + method + '</div>' +
+          '<div style="font-size:11px;color:var(--light-text);">' + new Date(w.created_at).toLocaleString() + '</div>' +
+          (w.note ? '<div style="font-size:11px;color:var(--danger);">Note: ' + w.note + '</div>' : '') +
+          '</div>' +
+          '<div style="text-align:right;">' +
+          '<div style="font-size:15px;font-weight:700;color:var(--danger);">-₹' + w.amount + '</div>' +
+          '<div style="font-size:11px;font-weight:700;color:' + statusColor + ';margin-top:2px;">' + w.status.toUpperCase() + '</div>' +
+          '</div></div>';
+      }).join('') : '<div style="text-align:center;color:var(--light-text);padding:20px;">No withdrawals yet</div>';
+      const el = document.getElementById('withdrawHistoryList');
+      if (el) el.innerHTML = html;
+    } catch (e) { console.error('loadWithdrawHistory error', e); }
   }
 
   async function loadBankCards() {
@@ -811,6 +906,50 @@
     document.getElementById('profilePhone').textContent = currentUser.phone;
     document.getElementById('userId').textContent = currentUser.id;
     document.getElementById('userCode').textContent = currentUser.invite_code;
+    // Show avatar if set
+    const img = document.getElementById('avatarImg');
+    const icon = document.getElementById('avatarIcon');
+    if (currentUser.avatar && img) {
+      img.src = currentUser.avatar;
+      img.style.display = 'block';
+      if (icon) icon.style.display = 'none';
+    } else if (img) {
+      img.style.display = 'none';
+      if (icon) icon.style.display = '';
+    }
+  }
+
+  async function uploadAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const status = document.getElementById('avatarUploadStatus');
+    status.style.display = 'block';
+    status.textContent = 'Uploading...';
+    status.style.color = 'var(--primary)';
+    const formData = new FormData();
+    formData.append('avatar', file);
+    try {
+      const res = await fetch(`${API}/user/profile`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        currentUser = { ...currentUser, ...data.user };
+        updateUI();
+        status.textContent = '✅ Photo updated!';
+        status.style.color = 'var(--success)';
+        setTimeout(() => { status.style.display = 'none'; }, 2000);
+      } else {
+        status.textContent = 'Upload failed';
+        status.style.color = 'var(--danger)';
+      }
+    } catch (e) {
+      status.textContent = 'Upload failed';
+      status.style.color = 'var(--danger)';
+    }
+    input.value = '';
   }
 
   // Navigation
@@ -824,6 +963,8 @@
     document.querySelector('.app-container')?.scrollTo(0, 0);
     // Fresh data load on page switch
     if (page === 'purchase-history') loadPurchases();
+    else if (page === 'deposit-history') loadDepositHistory();
+    else if (page === 'withdraw-history') loadWithdrawHistory();
     else if (page === 'funding') loadTransactions();
     else if (page === 'commissions') loadCommissions();
     else if (page === 'bank-cards') loadBankCards();
