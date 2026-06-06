@@ -13,11 +13,14 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'greenpower_secret_key_2024!@#';
 
 // ✅ SUPABASE CLIENT
+require('dotenv').config();
+
+const { createClient } = require('@supabase/supabase-js');
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_KEY
 );
-
 // Create uploads directory
 if (!fs.existsSync('./public/uploads')) {
   fs.mkdirSync('./public/uploads', { recursive: true });
