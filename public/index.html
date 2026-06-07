@@ -1,236 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Green Power | Financial Expert</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;font-family:'Nunito',sans-serif;}
-    :root{
-      --primary:#00C853;--primary-dark:#00963d;--accent:#00E676;
-      --bg:#0D1117;--card:#161B22;--card2:#1C2330;
-      --text:#E6EDF3;--muted:#7D8590;--border:#30363D;
-      --danger:#FF4D4D;--warn:#F0A500;--success:#00C853;
-      --grad:linear-gradient(135deg,#00C853,#00963d);
-    }
-    body{background:var(--bg);color:var(--text);overflow:hidden;}
-    .hidden{display:none!important;}
-    .page{display:none;}
-    .page.active{display:block;animation:fadeUp 200ms ease;}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-
-    /* TOAST */
-    .toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#23272e;color:#fff;padding:10px 18px;border-radius:50px;font-size:13px;font-weight:600;z-index:9999;display:none;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.5);}
-    .toast.show{display:block;animation:fadeUp 180ms ease;}
-
-    /* ===== LOGIN ===== */
-    #page-login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:2000;overflow-y:auto;}
-    #page-login.active{display:flex;}
-    .login-wrap{width:92%;max-width:400px;padding:20px 0;}
-    .login-logo{text-align:center;margin-bottom:28px;}
-    .login-logo .logo-icon{width:72px;height:72px;background:var(--grad);border-radius:20px;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:10px;box-shadow:0 8px 24px rgba(0,200,83,.3);}
-    .login-logo h1{font-size:26px;font-weight:900;color:var(--text);}
-    .login-logo p{font-size:13px;color:var(--muted);}
-    .login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
-    .login-tabs{display:flex;gap:8px;margin-bottom:20px;}
-    .login-tabs button{flex:1;padding:10px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
-    .login-tabs button.active{background:var(--grad);color:#fff;border-color:transparent;}
-    .fg{margin-bottom:14px;}
-    .fg label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
-    .fg input,.fg select{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border .2s;}
-    .fg input:focus,.fg select:focus{border-color:var(--primary);}
-    .fg.check{display:flex;align-items:center;gap:8px;}
-    .fg.check input{width:auto;}
-    .fg.check label{font-size:13px;text-transform:none;letter-spacing:0;margin:0;color:var(--muted);}
-    .btn-login{width:100%;padding:13px;background:var(--grad);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px;letter-spacing:.3px;box-shadow:0 4px 16px rgba(0,200,83,.3);}
-    .btn-login:hover{opacity:.9;}
-    .err-msg{background:rgba(255,77,77,.12);color:var(--danger);border:1px solid rgba(255,77,77,.3);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;}
-    .ok-msg{background:rgba(0,200,83,.12);color:var(--success);border:1px solid rgba(0,200,83,.3);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;}
-    .switch-link{text-align:center;margin-top:14px;font-size:13px;color:var(--muted);}
-    .switch-link a{color:var(--primary);text-decoration:none;font-weight:700;}
-
-    /* ===== APP ===== */
-    #app{position:fixed;inset:0;}
-    .app-body{height:calc(100vh - 62px);overflow-y:auto;padding-bottom:20px;}
-    #page-checkout{position:fixed;inset:0;z-index:1200;background:var(--bg);overflow-y:auto;}
-
-    /* HEADER */
-    .top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:var(--card);border-bottom:1px solid var(--border);}
-    .top-bar .brand{font-size:18px;font-weight:900;color:var(--text);}
-    .top-bar .brand span{color:var(--primary);}
-    .top-bar .notif{width:36px;height:36px;background:var(--card2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);border:1px solid var(--border);}
-
-    /* HERO */
-    .hero{margin:14px;border-radius:16px;background:linear-gradient(135deg,#0D3321,#0A2218);border:1px solid rgba(0,200,83,.2);padding:18px 20px;position:relative;overflow:hidden;}
-    .hero::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:radial-gradient(circle,rgba(0,200,83,.15),transparent 70%);}
-    .hero-row{display:flex;justify-content:space-between;align-items:flex-start;}
-    .hero-label{font-size:11px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
-    .hero-val{font-size:26px;font-weight:900;color:#fff;}
-    .hero-val span{font-size:14px;font-weight:700;color:var(--primary);}
-    .hero-badge{background:var(--grad);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:50px;}
-
-    /* STAT CARDS */
-    .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 14px 14px;}
-    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;}
-    .stat-card .lbl{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;}
-    .stat-card .val{font-size:20px;font-weight:900;color:var(--text);}
-    .stat-card .val.green{color:var(--primary);}
-    .stat-card .val.red{color:var(--danger);}
-    .stat-card .action-btn{margin-top:10px;width:100%;padding:8px;background:var(--grad);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
-
-    /* QUICK GRID */
-    .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 14px 14px;}
-    .quick-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;transition:all .2s;}
-    .quick-item:hover{border-color:var(--primary);background:var(--card2);}
-    .quick-item i{font-size:22px;color:var(--primary);display:block;margin-bottom:6px;}
-    .quick-item span{font-size:10px;color:var(--muted);font-weight:700;line-height:1.3;}
-
-    /* SECTION TITLE */
-    .sec-title{padding:6px 14px 10px;font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
-
-    /* TABS */
-    .tabs-bar{display:flex;gap:8px;padding:0 14px 12px;overflow-x:auto;}
-    .tabs-bar::-webkit-scrollbar{display:none;}
-    .tab-btn{padding:8px 16px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;}
-    .tab-btn.active{background:var(--grad);color:#fff;border-color:transparent;}
-
-    /* PLAN CARDS */
-    .plans-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 14px 14px;}
-    .plan-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;}
-    .plan-card:hover{transform:translateY(-3px);border-color:var(--primary);}
-    .plan-img{width:100%;height:130px;object-fit:cover;background:linear-gradient(135deg,#0D3321,#0A2218);display:flex;align-items:center;justify-content:center;font-size:36px;}
-    .plan-img img{width:100%;height:130px;object-fit:cover;}
-    .plan-body{padding:12px;}
-    .plan-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px;}
-    .plan-meta{font-size:11px;color:var(--muted);margin-bottom:2px;}
-    .plan-price{font-size:15px;font-weight:900;color:var(--primary);margin:6px 0;}
-    .plan-buy{width:100%;padding:8px;background:transparent;border:1px solid var(--primary);color:var(--primary);border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;}
-    .plan-buy:hover{background:var(--primary);color:#fff;}
-
-    /* BOTTOM NAV */
-    .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:500;}
-    .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);cursor:pointer;transition:color .2s;font-size:11px;font-weight:700;border:none;background:transparent;}
-    .nav-btn i{font-size:22px;}
-    .nav-btn.active{color:var(--primary);}
-
-    /* INNER PAGES */
-    .inner-page{padding:0 14px 20px;}
-    .page-header{display:flex;align-items:center;gap:12px;padding:14px 14px 16px;background:var(--card);border-bottom:1px solid var(--border);margin-bottom:14px;position:sticky;top:0;z-index:100;}
-    .page-header .back-btn{width:36px;height:36px;background:var(--card2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;flex-shrink:0;}
-    .page-header h2{font-size:17px;font-weight:900;color:var(--text);}
-
-    /* CARDS */
-    .c-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
-    .c-card .c-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
-    .c-card .c-row:last-child{border-bottom:none;}
-    .c-row .c-label{font-size:12px;color:var(--muted);font-weight:700;}
-    .c-row .c-val{font-size:14px;color:var(--text);font-weight:700;}
-
-    /* HISTORY ITEMS */
-    .hist-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
-    .hist-left .h-type{font-size:14px;font-weight:800;color:var(--text);}
-    .hist-left .h-sub{font-size:11px;color:var(--muted);margin-top:3px;}
-    .hist-left .h-date{font-size:11px;color:var(--muted);}
-    .hist-right .h-amt{font-size:16px;font-weight:900;}
-    .hist-right .h-status{font-size:11px;font-weight:800;margin-top:4px;text-align:right;}
-    .badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:10px;font-weight:800;}
-    .badge.pending{background:rgba(240,165,0,.15);color:var(--warn);}
-    .badge.approved{background:rgba(0,200,83,.15);color:var(--success);}
-    .badge.rejected{background:rgba(255,77,77,.15);color:var(--danger);}
-
-    /* PROFILE */
-    .profile-hero{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center;margin-bottom:12px;}
-    .avatar-wrap{position:relative;width:80px;margin:0 auto 12px;cursor:pointer;}
-    .avatar-circle{width:80px;height:80px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;overflow:hidden;border:3px solid var(--primary);box-shadow:0 4px 16px rgba(0,200,83,.3);}
-    .avatar-circle img{width:80px;height:80px;object-fit:cover;border-radius:50%;}
-    .cam-btn{position:absolute;bottom:0;right:0;width:24px;height:24px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
-    .cam-btn i{font-size:10px;color:#fff;}
-    .profile-name{font-size:18px;font-weight:900;color:var(--text);}
-    .profile-phone{font-size:13px;color:var(--muted);margin-top:3px;}
-
-    /* MODAL */
-    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:3000;align-items:flex-end;justify-content:center;}
-    .modal.active{display:flex;}
-    .modal-box{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:slideUp 200ms ease;}
-    @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-    .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-    .modal-head h3{font-size:17px;font-weight:900;color:var(--text);}
-    .modal-close{width:32px;height:32px;background:var(--card2);border:1px solid var(--border);border-radius:50%;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-
-    /* BUTTONS */
-    .btn{padding:12px 18px;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;}
-    .btn-primary{background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(0,200,83,.25);}
-    .btn-primary:hover{opacity:.9;}
-    .btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
-    .btn-danger{background:rgba(255,77,77,.15);color:var(--danger);border:1px solid rgba(255,77,77,.3);}
-    .btn-block{width:100%;display:block;}
-    .mt-10{margin-top:10px;}
-    .mt-14{margin-top:14px;}
-    .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
-    .empty-state i{font-size:40px;opacity:.3;margin-bottom:12px;display:block;}
-    .empty-state p{font-size:14px;}
-
-    /* MINE MENU */
-    .mine-menu{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
-    .mine-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s;}
-    .mine-item:hover{border-color:var(--primary);}
-    .mine-item i{font-size:22px;color:var(--primary);display:block;margin-bottom:6px;}
-    .mine-item span{font-size:11px;color:var(--muted);font-weight:700;line-height:1.3;}
-
-    /* TEAM */
-    .team-member{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
-    .team-avatar{width:40px;height:40px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:900;flex-shrink:0;}
-    .team-info .t-phone{font-size:13px;font-weight:700;color:var(--text);}
-    .team-info .t-date{font-size:11px;color:var(--muted);}
-
-    /* PROGRESS BAR */
-    .prog-bar{height:6px;background:var(--border);border-radius:10px;margin:8px 0;}
-    .prog-fill{height:6px;background:var(--grad);border-radius:10px;}
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Green Power</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Nunito',sans-serif;}
+:root{--p:#00C853;--pd:#00963d;--bg:#0D1117;--card:#161B22;--card2:#1C2330;--text:#E6EDF3;--muted:#7D8590;--border:#30363D;--danger:#FF4D4D;--warn:#F0A500;--grad:linear-gradient(135deg,#00C853,#00963d);}
+body{background:var(--bg);color:var(--text);overflow:hidden;}
+.hidden{display:none!important;}
+.page{display:none;}
+.page.active{display:block;animation:fu .2s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* TOAST */
+#toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#23272e;color:#fff;padding:10px 18px;border-radius:50px;font-size:13px;font-weight:700;z-index:9999;display:none;border:1px solid var(--border);box-shadow:0 8px 24px #0008;}
+#toast.show{display:block;}
+/* LOGIN */
+#page-login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:2000;overflow-y:auto;}
+#page-login.active{display:flex;}
+.lw{width:92%;max-width:400px;padding:20px 0;}
+.logo-icon{width:72px;height:72px;background:var(--grad);border-radius:20px;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:10px;box-shadow:0 8px 24px rgba(0,200,83,.3);}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.ltabs{display:flex;gap:8px;margin-bottom:20px;}
+.ltabs button{flex:1;padding:10px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+.ltabs button.active{background:var(--grad);color:#fff;border-color:transparent;}
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.fg input,.fg select{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border .2s;}
+.fg input:focus{border-color:var(--p);}
+.fg.ck{display:flex;align-items:center;gap:8px;}
+.fg.ck input{width:auto;}.fg.ck label{font-size:13px;text-transform:none;letter-spacing:0;margin:0;}
+.btn-login{width:100%;padding:13px;background:var(--grad);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px;box-shadow:0 4px 16px rgba(0,200,83,.3);}
+.err{background:rgba(255,77,77,.12);color:var(--danger);border:1px solid rgba(255,77,77,.3);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;}
+.ok{background:rgba(0,200,83,.12);color:var(--p);border:1px solid rgba(0,200,83,.3);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;}
+/* APP */
+#app{position:fixed;inset:0;}
+.app-body{height:calc(100vh - 62px);overflow-y:auto;padding-bottom:20px;}
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:var(--card);border-bottom:1px solid var(--border);}
+.topbar .brand{font-size:18px;font-weight:900;}.topbar .brand span{color:var(--p);}
+.notif-btn{width:36px;height:36px;background:var(--card2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);border:1px solid var(--border);}
+/* HERO */
+.hero{margin:14px;border-radius:16px;background:linear-gradient(135deg,#0D3321,#0A2218);border:1px solid rgba(0,200,83,.2);padding:18px 20px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:radial-gradient(circle,rgba(0,200,83,.15),transparent 70%);}
+.hero-label{font-size:11px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.hero-row{display:flex;justify-content:space-between;align-items:flex-start;}
+.hero-val{font-size:26px;font-weight:900;color:#fff;}
+.hero-badge{background:var(--grad);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:50px;}
+/* STAT ROW */
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 14px 14px;}
+.scard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;}
+.scard .lbl{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;}
+.scard .val{font-size:20px;font-weight:900;}.scard .val.g{color:var(--p);}.scard .val.r{color:var(--danger);}
+.abtn{margin-top:10px;width:100%;padding:8px;background:var(--grad);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+/* QUICK */
+.qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 14px 14px;}
+.qi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;transition:all .2s;}
+.qi:hover{border-color:var(--p);}
+.qi i{font-size:22px;color:var(--p);display:block;margin-bottom:6px;}
+.qi span{font-size:10px;color:var(--muted);font-weight:700;line-height:1.3;}
+/* TABS */
+.tabs{display:flex;gap:8px;padding:0 14px 12px;overflow-x:auto;}
+.tabs::-webkit-scrollbar{display:none;}
+.tbtn{padding:8px 16px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;}
+.tbtn.active{background:var(--grad);color:#fff;border-color:transparent;}
+/* PLANS GRID */
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 14px 14px;}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;}
+.pcard:hover{transform:translateY(-3px);border-color:var(--p);}
+.pimg{width:100%;height:110px;background:linear-gradient(135deg,#0D3321,#0A2218);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;}
+.pimg img{width:100%;height:110px;object-fit:cover;}
+.pbody{padding:10px 12px;}
+.pname{font-size:13px;font-weight:800;margin-bottom:4px;}
+.pmeta{font-size:11px;color:var(--muted);margin-bottom:2px;}
+.pprice{font-size:15px;font-weight:900;color:var(--p);margin:6px 0 8px;}
+.pbuy{width:100%;padding:8px;background:transparent;border:1px solid var(--p);color:var(--p);border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;}
+.pbuy:hover{background:var(--p);color:#fff;}
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:500;}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);cursor:pointer;transition:color .2s;font-size:11px;font-weight:700;border:none;background:transparent;}
+.nbtn i{font-size:22px;}.nbtn.active{color:var(--p);}
+/* PAGE HEADER */
+.phdr{display:flex;align-items:center;gap:12px;padding:14px;background:var(--card);border-bottom:1px solid var(--border);margin-bottom:14px;position:sticky;top:0;z-index:100;}
+.back-btn{width:36px;height:36px;background:var(--card2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;flex-shrink:0;}
+.phdr h2{font-size:17px;font-weight:900;}
+/* INNER */
+.inner{padding:0 14px 20px;}
+/* CARDS */
+.ccard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+.crow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.crow:last-child{border-bottom:none;}
+.clbl{font-size:12px;color:var(--muted);font-weight:700;}
+.cval{font-size:14px;font-weight:700;}
+/* HISTORY */
+.hitem{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.htype{font-size:14px;font-weight:800;}
+.hsub{font-size:11px;color:var(--muted);margin-top:3px;}
+.hdate{font-size:11px;color:var(--muted);margin-top:2px;}
+.hamt{font-size:16px;font-weight:900;text-align:right;}
+.hstatus{font-size:11px;font-weight:800;margin-top:4px;text-align:right;}
+/* BADGE */
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:10px;font-weight:800;}
+.badge.pending{background:rgba(240,165,0,.15);color:var(--warn);}
+.badge.approved{background:rgba(0,200,83,.15);color:var(--p);}
+.badge.rejected{background:rgba(255,77,77,.15);color:var(--danger);}
+.badge.active{background:rgba(0,200,83,.15);color:var(--p);}
+.badge.completed{background:rgba(125,133,144,.15);color:var(--muted);}
+/* PROFILE */
+.prof-hero{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center;margin-bottom:12px;}
+.av-wrap{position:relative;width:80px;margin:0 auto 12px;cursor:pointer;}
+.av-circle{width:80px;height:80px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;overflow:hidden;border:3px solid var(--p);}
+.av-circle img{width:80px;height:80px;object-fit:cover;border-radius:50%;}
+.cam-btn{position:absolute;bottom:0;right:0;width:24px;height:24px;background:var(--p);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
+.cam-btn i{font-size:10px;color:#fff;}
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:3000;align-items:flex-end;justify-content:center;}
+.modal.active{display:flex;}
+.mbox{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:slideUp .2s ease;}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.mhead h3{font-size:17px;font-weight:900;}
+.mcls{width:32px;height:32px;background:var(--card2);border:1px solid var(--border);border-radius:50%;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+/* BUTTONS */
+.btn{padding:12px 18px;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;}
+.btn-p{background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(0,200,83,.25);}
+.btn-s{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+.btn-d{background:rgba(255,77,77,.15);color:var(--danger);border:1px solid rgba(255,77,77,.3);}
+.btn-blk{width:100%;display:block;}
+.mt8{margin-top:8px;}.mt14{margin-top:14px;}
+/* MINE MENU */
+.mmenu{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.mi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s;}
+.mi:hover{border-color:var(--p);}
+.mi i{font-size:22px;color:var(--p);display:block;margin-bottom:6px;}
+.mi span{font-size:11px;color:var(--muted);font-weight:700;line-height:1.3;}
+/* PROGRESS */
+.prog{height:6px;background:var(--border);border-radius:10px;margin:8px 0;}
+.prog-fill{height:6px;background:var(--grad);border-radius:10px;}
+/* TEAM */
+.tmember{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.tavatar{width:40px;height:40px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:900;flex-shrink:0;}
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty i{font-size:40px;opacity:.3;margin-bottom:12px;display:block;}
+.empty p{font-size:14px;}
+/* QR BOX */
+.qr-box{width:220px;height:220px;margin:0 auto 14px;background:var(--card2);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);}
+.qr-box img{width:210px;height:210px;border-radius:10px;}
+/* INFO BOX */
+.info-box{border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted);}
+.info-box.green{background:rgba(0,200,83,.08);border:1px solid rgba(0,200,83,.2);}
+.info-box.warn{background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.2);}
+/* PLAN DETAIL inside modal */
+.plan-detail-img{width:100%;height:140px;background:linear-gradient(135deg,#0D3321,#0A2218);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:14px;overflow:hidden;}
+.plan-detail-img img{width:100%;height:140px;object-fit:cover;border-radius:12px;}
+/* CHECKOUT PAGE */
+#page-checkout{position:fixed;inset:0;z-index:1500;background:var(--bg);overflow-y:auto;display:none;}
+#page-checkout.active{display:block;}
+</style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN PAGE -->
 <div id="page-login" class="page active">
-  <div class="login-wrap">
-    <div class="login-logo">
+  <div class="lw">
+    <div style="text-align:center;margin-bottom:28px;">
       <div class="logo-icon">🌿</div>
-      <h1>Green Power</h1>
-      <p>Your Financial Expert</p>
+      <h1 style="font-size:26px;font-weight:900;">Green Power</h1>
+      <p style="font-size:13px;color:var(--muted);">Your Financial Expert</p>
     </div>
     <div class="login-box">
-      <div class="login-tabs">
-        <button class="active" id="loginTab" onclick="showTab('login')">Login</button>
-        <button id="regTab" onclick="showTab('register')">Register</button>
+      <div class="ltabs">
+        <button class="active" id="tab-login" onclick="showTab('login')">Login</button>
+        <button id="tab-reg" onclick="showTab('register')">Register</button>
       </div>
-
-      <!-- LOGIN FORM -->
       <div id="loginForm">
-        <div id="loginError" class="err-msg hidden"></div>
-        <div class="fg"><label>Mobile Number</label><input type="tel" id="loginPhone" placeholder="Enter mobile number"></div>
-        <div class="fg"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter password"></div>
-        <button class="btn-login" onclick="handleLogin()">Login</button>
+        <div id="loginErr" class="err hidden"></div>
+        <div class="fg"><label>Mobile Number</label><input type="tel" id="lPhone" placeholder="Enter mobile number"></div>
+        <div class="fg"><label>Password</label><input type="password" id="lPass" placeholder="Enter password"></div>
+        <button class="btn-login" onclick="doLogin()">🚀 Login</button>
       </div>
-
-      <!-- REGISTER FORM -->
-      <div id="registerForm" class="hidden">
-        <div id="registerError" class="err-msg hidden"></div>
-        <div id="registerSuccess" class="ok-msg hidden"></div>
-        <div class="fg"><label>Mobile Number</label><input type="tel" id="regPhone" placeholder="Enter mobile number"></div>
-        <div class="fg"><label>Password</label><input type="password" id="regPassword" placeholder="Min 6 characters"></div>
-        <div class="fg"><label>Confirm Password</label><input type="password" id="regConfirm" placeholder="Confirm password"></div>
-        <div class="fg"><label>Invite Code (Optional)</label><input type="text" id="inviteCode" placeholder="Enter referral code"></div>
-        <div class="fg check"><input type="checkbox" id="agreeTerms"><label for="agreeTerms">I agree to Terms & Conditions</label></div>
-        <button class="btn-login" onclick="handleRegister()">Create Account</button>
+      <div id="regForm" class="hidden">
+        <div id="regErr" class="err hidden"></div>
+        <div id="regOk" class="ok hidden"></div>
+        <div class="fg"><label>Mobile Number</label><input type="tel" id="rPhone" placeholder="Enter mobile number"></div>
+        <div class="fg"><label>Password</label><input type="password" id="rPass" placeholder="Min 6 characters"></div>
+        <div class="fg"><label>Confirm Password</label><input type="password" id="rConf" placeholder="Confirm password"></div>
+        <div class="fg"><label>Invite Code (Optional)</label><input type="text" id="rInvite" placeholder="Enter referral code"></div>
+        <div class="fg ck"><input type="checkbox" id="rAgree"><label for="rAgree">I agree to Terms & Conditions</label></div>
+        <button class="btn-login" onclick="doRegister()">✅ Create Account</button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
 
 <!-- APP -->
 <div id="app" class="hidden">
@@ -238,441 +204,597 @@
 
     <!-- HOME -->
     <div id="page-home" class="page active">
-      <div class="top-bar">
+      <div class="topbar">
         <div class="brand">Green <span>Power</span></div>
-        <div class="notif"><i class="fas fa-bell"></i></div>
+        <div class="notif-btn"><i class="fas fa-bell"></i></div>
       </div>
       <div style="height:14px;"></div>
-
-      <!-- Balance Hero -->
       <div class="hero">
         <div class="hero-label">Total Balance</div>
         <div class="hero-row">
-          <div class="hero-val"><span>₹</span><span id="heroBal">0</span></div>
-          <div class="hero-badge">VIP</div>
+          <div class="hero-val">₹<span id="heroBal">0.00</span></div>
+          <div class="hero-badge" id="heroVip">VIP</div>
         </div>
-        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:8px;">Withdraw Balance: ₹<span id="heroWithBal">0</span></div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;">Withdraw Balance: ₹<span id="heroWBal">0.00</span></div>
       </div>
-
-      <!-- Stat Cards -->
-      <div class="stat-row">
-        <div class="stat-card">
-          <div class="lbl">Recharge</div>
-          <div class="val green">₹<span id="rechargeBalance">0</span></div>
-          <button class="action-btn" onclick="openRechargeModal()">+ Deposit</button>
+      <div class="srow">
+        <div class="scard">
+          <div class="lbl">Balance</div>
+          <div class="val g">₹<span id="sBal">0.00</span></div>
+          <button class="abtn" onclick="openRechargeModal()">+ Deposit</button>
         </div>
-        <div class="stat-card">
+        <div class="scard">
           <div class="lbl">Withdraw</div>
-          <div class="val red">₹<span id="withdrawBalance">0</span></div>
-          <button class="action-btn" onclick="openWithdrawModal()">Withdraw</button>
+          <div class="val r">₹<span id="sWBal">0.00</span></div>
+          <button class="abtn" onclick="openWithdrawModal()">Withdraw</button>
         </div>
       </div>
-
-      <!-- Quick Links -->
-      <div class="quick-grid">
-        <div class="quick-item" onclick="goToPage('purchase-history')">
-          <i class="fas fa-history"></i><span>Purchase History</span>
-        </div>
-        <div class="quick-item" onclick="goToPage('funding')">
-          <i class="fas fa-exchange-alt"></i><span>Transactions</span>
-        </div>
-        <div class="quick-item" onclick="shareCode()">
-          <i class="fas fa-share-alt"></i><span>Share</span>
-        </div>
-        <div class="quick-item" onclick="navTo('team')">
-          <i class="fas fa-users"></i><span>Team</span>
-        </div>
+      <div class="qgrid">
+        <div class="qi" onclick="goPage('purchase-history')"><i class="fas fa-history"></i><span>My Plans</span></div>
+        <div class="qi" onclick="goPage('funding')"><i class="fas fa-exchange-alt"></i><span>Transactions</span></div>
+        <div class="qi" onclick="shareCode()"><i class="fas fa-share-alt"></i><span>Share</span></div>
+        <div class="qi" onclick="navTo('team',null)"><i class="fas fa-users"></i><span>Team</span></div>
       </div>
-
-      <!-- Plans -->
-      <div class="tabs-bar">
-        <button class="tab-btn active" onclick="switchCat(this,'vip')">💎 VIP PRO</button>
-        <button class="tab-btn" onclick="switchCat(this,'fixed')">🔒 Fixed PRO</button>
-        <button class="tab-btn" onclick="switchCat(this,'event')">📦 Event PRO</button>
+      <div class="tabs" id="homeTabs">
+        <button class="tbtn active" onclick="switchCat(this,'vip')">💎 VIP PRO</button>
+        <button class="tbtn" onclick="switchCat(this,'fixed')">🔒 Fixed PRO</button>
+        <button class="tbtn" onclick="switchCat(this,'event')">📦 Event PRO</button>
       </div>
-      <div id="plansList" class="plans-grid"></div>
+      <div id="plansList" class="pgrid"></div>
     </div>
 
     <!-- EARNINGS -->
     <div id="page-earnings" class="page">
-      <div class="top-bar">
-        <div class="brand">📈 <span>Earnings</span></div>
-      </div>
+      <div class="topbar"><div class="brand">📈 <span>Earnings</span></div></div>
       <div style="height:14px;"></div>
-      <div class="tabs-bar">
-        <button class="tab-btn active" onclick="switchCat(this,'vip')">💎 VIP PRO</button>
-        <button class="tab-btn" onclick="switchCat(this,'fixed')">🔒 Fixed PRO</button>
-        <button class="tab-btn" onclick="switchCat(this,'event')">📦 Event PRO</button>
+      <div class="tabs">
+        <button class="tbtn active" onclick="switchCat(this,'vip')">💎 VIP PRO</button>
+        <button class="tbtn" onclick="switchCat(this,'fixed')">🔒 Fixed PRO</button>
+        <button class="tbtn" onclick="switchCat(this,'event')">📦 Event PRO</button>
       </div>
-      <div id="earningsList" class="plans-grid"></div>
+      <div id="earningsList" class="pgrid"></div>
     </div>
 
     <!-- TEAM -->
     <div id="page-team" class="page">
-      <div class="top-bar">
-        <div class="brand">👥 <span>Team</span></div>
-      </div>
+      <div class="topbar"><div class="brand">👥 <span>Team</span></div></div>
       <div style="padding:14px;">
-        <div class="c-card" style="margin-bottom:12px;">
-          <div class="lbl" style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px;">YOUR REFERRAL CODE</div>
-          <div style="display:flex;gap:10px;">
+        <div class="ccard" style="margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px;">YOUR REFERRAL CODE</div>
+          <div style="display:flex;gap:8px;">
             <input id="myRefCode" readonly style="flex:1;padding:11px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-weight:800;">
-            <button class="btn btn-primary" onclick="copyRefCode()">Copy</button>
+            <button class="btn btn-p" onclick="copyCode()">Copy</button>
           </div>
         </div>
-        <div class="stat-row" style="margin:0 0 14px;">
-          <div class="stat-card"><div class="lbl">Members</div><div class="val green" id="teamCount">0</div></div>
-          <div class="stat-card"><div class="lbl">Commission</div><div class="val green">₹<span id="teamComm">0</span></div></div>
+        <div class="srow" style="margin:0 0 14px;">
+          <div class="scard"><div class="lbl">Members</div><div class="val g" id="teamCount">0</div></div>
+          <div class="scard"><div class="lbl">Commission</div><div class="val g">₹<span id="teamComm">0</span></div></div>
         </div>
-        <div class="sec-title">TEAM MEMBERS</div>
+        <div style="font-size:13px;font-weight:800;color:var(--muted);margin-bottom:10px;">TEAM MEMBERS</div>
         <div id="teamList"></div>
       </div>
     </div>
 
     <!-- MINE -->
     <div id="page-mine" class="page">
-      <div class="top-bar">
-        <div class="brand">👤 <span>Profile</span></div>
-      </div>
+      <div class="topbar"><div class="brand">👤 <span>Profile</span></div></div>
       <div style="padding:14px;">
-        <div class="profile-hero">
-          <div class="avatar-wrap" onclick="document.getElementById('avatarInput').click()">
-            <div class="avatar-circle">
-              <i class="fas fa-user" id="avatarIcon"></i>
-              <img id="avatarImg" src="" style="display:none;">
-            </div>
+        <div class="prof-hero">
+          <div class="av-wrap" onclick="document.getElementById('avInput').click()">
+            <div class="av-circle"><i class="fas fa-user" id="avIcon"></i><img id="avImg" src="" style="display:none;"></div>
             <div class="cam-btn"><i class="fas fa-camera"></i></div>
           </div>
-          <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
-          <div id="avatarStatus" style="font-size:11px;color:var(--primary);margin-bottom:4px;display:none;">Uploading...</div>
-          <div class="profile-name" id="profileName">User</div>
-          <div class="profile-phone" id="profilePhone"></div>
-          <div style="margin-top:10px;font-size:12px;color:var(--muted);">ID: <b id="userId">-</b> &nbsp;|&nbsp; Code: <b id="userCode" style="color:var(--primary);">-</b> <a href="#" onclick="copyRefCode()" style="color:var(--primary);text-decoration:none;margin-left:6px;font-size:11px;">Copy</a></div>
+          <input type="file" id="avInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+          <div style="font-size:18px;font-weight:900;" id="profName">User</div>
+          <div style="font-size:13px;color:var(--muted);" id="profPhone"></div>
+          <div style="margin-top:8px;font-size:12px;color:var(--muted);">ID: <b id="profId">-</b> &nbsp;|&nbsp; Code: <b id="profCode" style="color:var(--p);">-</b> <a href="#" onclick="copyCode()" style="color:var(--p);text-decoration:none;margin-left:4px;font-size:11px;font-weight:700;">Copy</a></div>
         </div>
-
-        <div class="stat-row">
-          <div class="stat-card"><div class="lbl">Total Recharge</div><div class="val green">₹<span id="totalRecharge">0</span></div></div>
-          <div class="stat-card"><div class="lbl">Total Withdraw</div><div class="val red">₹<span id="totalWithdraw">0</span></div></div>
+        <div class="srow">
+          <div class="scard"><div class="lbl">Total Recharge</div><div class="val g">₹<span id="mTR">0</span></div></div>
+          <div class="scard"><div class="lbl">Total Withdraw</div><div class="val r">₹<span id="mTW">0</span></div></div>
         </div>
-
-        <div class="mine-menu">
-          <div class="mine-item" onclick="goToPage('purchase-history')">
-            <i class="fas fa-shopping-bag"></i><span>Purchase History</span>
-          </div>
-          <div class="mine-item" onclick="goToPage('deposit-history')">
-            <i class="fas fa-arrow-circle-down"></i><span>Deposit History</span>
-          </div>
-          <div class="mine-item" onclick="goToPage('withdraw-history')">
-            <i class="fas fa-arrow-circle-up"></i><span>Withdrawal History</span>
-          </div>
-          <div class="mine-item" onclick="goToPage('funding')">
-            <i class="fas fa-list-alt"></i><span>All Transactions</span>
-          </div>
-          <div class="mine-item" onclick="goToPage('bank-cards')">
-            <i class="fas fa-credit-card"></i><span>Bank Cards</span>
-          </div>
-          <div class="mine-item" onclick="goToPage('commissions')">
-            <i class="fas fa-star"></i><span>Commissions</span>
-          </div>
+        <div class="mmenu">
+          <div class="mi" onclick="goPage('purchase-history')"><i class="fas fa-shopping-bag"></i><span>My Plans</span></div>
+          <div class="mi" onclick="goPage('deposit-history')"><i class="fas fa-arrow-circle-down"></i><span>Deposit History</span></div>
+          <div class="mi" onclick="goPage('withdraw-history')"><i class="fas fa-arrow-circle-up"></i><span>Withdrawal History</span></div>
+          <div class="mi" onclick="goPage('funding')"><i class="fas fa-list-alt"></i><span>All Transactions</span></div>
+          <div class="mi" onclick="goPage('bank-cards')"><i class="fas fa-credit-card"></i><span>Bank Cards</span></div>
+          <div class="mi" onclick="goPage('commissions')"><i class="fas fa-star"></i><span>Commissions</span></div>
         </div>
-
-        <button class="btn btn-danger btn-block" onclick="handleLogout()">
-          <i class="fas fa-sign-out-alt"></i> Sign Out
-        </button>
+        <button class="btn btn-d btn-blk" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
       </div>
     </div>
 
     <!-- PURCHASE HISTORY -->
     <div id="page-purchase-history" class="page">
-      <div class="page-header">
-        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
-        <h2>Purchase History</h2>
-      </div>
-      <div class="inner-page"><div id="purchaseList"></div></div>
+      <div class="phdr"><div class="back-btn" onclick="goPage('mine')"><i class="fas fa-arrow-left"></i></div><h2>My Purchased Plans</h2></div>
+      <div class="inner"><div id="purchaseList"></div></div>
     </div>
 
     <!-- DEPOSIT HISTORY -->
     <div id="page-deposit-history" class="page">
-      <div class="page-header">
-        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
-        <h2>Deposit History</h2>
-      </div>
-      <div class="inner-page"><div id="depositHistoryList"></div></div>
+      <div class="phdr"><div class="back-btn" onclick="goPage('mine')"><i class="fas fa-arrow-left"></i></div><h2>Deposit History</h2></div>
+      <div class="inner"><div id="depositHistList"></div></div>
     </div>
 
     <!-- WITHDRAWAL HISTORY -->
     <div id="page-withdraw-history" class="page">
-      <div class="page-header">
-        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
-        <h2>Withdrawal History</h2>
-      </div>
-      <div class="inner-page"><div id="withdrawHistoryList"></div></div>
+      <div class="phdr"><div class="back-btn" onclick="goPage('mine')"><i class="fas fa-arrow-left"></i></div><h2>Withdrawal History</h2></div>
+      <div class="inner"><div id="withdrawHistList"></div></div>
     </div>
 
-    <!-- FUNDING -->
+    <!-- ALL TRANSACTIONS -->
     <div id="page-funding" class="page">
-      <div class="page-header">
-        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
-        <h2>All Transactions</h2>
-      </div>
-      <div class="inner-page"><div id="fundingList"></div></div>
+      <div class="phdr"><div class="back-btn" onclick="goPage('mine')"><i class="fas fa-arrow-left"></i></div><h2>All Transactions</h2></div>
+      <div class="inner"><div id="fundingList"></div></div>
     </div>
 
     <!-- COMMISSIONS -->
     <div id="page-commissions" class="page">
-      <div class="page-header">
-        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
-        <h2>Commission Record</h2>
-      </div>
-      <div class="inner-page"><div id="commissionList"></div></div>
+      <div class="phdr"><div class="back-btn" onclick="goPage('mine')"><i class="fas fa-arrow-left"></i></div><h2>Commission Record</h2></div>
+      <div class="inner"><div id="commList"></div></div>
     </div>
 
     <!-- BANK CARDS -->
     <div id="page-bank-cards" class="page">
-      <div class="page-header">
-        <div class="back-btn" onclick="goToPage('mine')"><i class="fas fa-arrow-left"></i></div>
-        <h2>Bank Cards</h2>
-      </div>
-      <div class="inner-page">
-        <button class="btn btn-primary btn-block" onclick="openAddCardModal()" style="margin-bottom:14px;">+ Add Bank Card</button>
+      <div class="phdr"><div class="back-btn" onclick="goPage('mine')"><i class="fas fa-arrow-left"></i></div><h2>Bank Cards</h2></div>
+      <div class="inner">
+        <button class="btn btn-p btn-blk" onclick="openAddCardModal()" style="margin-bottom:14px;">+ Add Bank Card</button>
         <div id="bankCardsList"></div>
       </div>
     </div>
 
-  </div>
+  </div><!-- .app-body -->
 
   <!-- BOTTOM NAV -->
-  <div class="bottom-nav">
-    <button class="nav-btn active" onclick="navTo('home',this)"><i class="fas fa-home"></i>Home</button>
-    <button class="nav-btn" onclick="navTo('earnings',this)"><i class="fas fa-chart-line"></i>Earnings</button>
-    <button class="nav-btn" onclick="navTo('team',this)"><i class="fas fa-users"></i>Team</button>
-    <button class="nav-btn" onclick="navTo('mine',this)"><i class="fas fa-user"></i>Mine</button>
+  <div class="bnav">
+    <button class="nbtn active" onclick="navTo('home',this)"><i class="fas fa-home"></i>Home</button>
+    <button class="nbtn" onclick="navTo('earnings',this)"><i class="fas fa-chart-line"></i>Earnings</button>
+    <button class="nbtn" onclick="navTo('team',this)"><i class="fas fa-users"></i>Team</button>
+    <button class="nbtn" onclick="navTo('mine',this)"><i class="fas fa-user"></i>Mine</button>
   </div>
 </div>
 
-<!-- CHECKOUT PAGE -->
-<div id="page-checkout" class="page">
-  <div class="page-header">
-    <div class="back-btn" onclick="goToPage('home')"><i class="fas fa-arrow-left"></i></div>
-    <h2>Complete Payment</h2>
-  </div>
+<!-- CHECKOUT PAGE (full screen) -->
+<div id="page-checkout">
+  <div class="phdr"><div class="back-btn" onclick="closeCheckout()"><i class="fas fa-arrow-left"></i></div><h2>Complete Payment</h2></div>
   <div style="padding:0 14px 30px;">
     <div style="background:var(--grad);border-radius:14px;padding:20px;text-align:center;margin-bottom:16px;">
       <div style="font-size:13px;color:rgba(255,255,255,.7);">Plan Amount</div>
-      <div style="font-size:32px;font-weight:900;color:#fff;">₹<span id="checkoutAmount">0</span></div>
+      <div style="font-size:32px;font-weight:900;color:#fff;">₹<span id="coAmount">0</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:4px;" id="coPlanName"></div>
     </div>
-    <div class="c-card" style="text-align:center;margin-bottom:14px;">
-      <div style="font-weight:800;color:var(--text);margin-bottom:14px;">Scan QR Code to Pay</div>
-      <div id="paymentQR" style="width:220px;height:220px;margin:0 auto 14px;background:var(--card2);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">
-        <div style="text-align:center;color:var(--muted);"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;font-size:13px;">Loading QR...</div></div>
-      </div>
+    <div class="ccard" style="text-align:center;margin-bottom:14px;">
+      <div style="font-weight:800;margin-bottom:12px;">Scan & Pay</div>
+      <div class="qr-box" id="coQR"><div style="text-align:center;color:var(--muted);"><i class="fas fa-spinner fa-spin" style="font-size:30px;"></i><div style="margin-top:8px;font-size:13px;">Generating QR...</div></div></div>
     </div>
-    <div class="c-card" style="margin-bottom:14px;">
-      <div class="c-row"><span class="c-label">UPI ID</span><span class="c-val" id="paymentUPI">greenpower@upi</span></div>
-      <div class="c-row"><span class="c-label">Name</span><span class="c-val">Green Power</span></div>
-      <div class="c-row"><span class="c-label">Amount</span><span class="c-val" style="color:var(--primary);">₹<span id="manualAmount">0</span></span></div>
+    <div class="ccard" style="margin-bottom:14px;">
+      <div class="crow"><span class="clbl">UPI ID</span><span class="cval" id="coUPI">-</span></div>
+      <div class="crow"><span class="clbl">Name</span><span class="cval">Green Power</span></div>
+      <div class="crow"><span class="clbl">Amount</span><span class="cval" style="color:var(--p);">₹<span id="coAmt2">0</span></span></div>
     </div>
-    <div style="background:rgba(0,200,83,.08);border:1px solid rgba(0,200,83,.2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted);">
-      ✅ After payment, enter UTR ID and upload screenshot below
-    </div>
-    <div class="fg"><label>UTR ID / Transaction ID</label><input type="text" id="transactionRef" placeholder="Enter UTR ID from receipt"></div>
-    <div class="fg"><label>Payment Screenshot</label><input type="file" id="paymentProof" accept="image/*" style="color:var(--muted);"></div>
-    <button class="btn btn-primary btn-block mt-14" onclick="submitPaymentProof()">✅ Confirm Payment</button>
-    <button class="btn btn-secondary btn-block mt-10" onclick="goToPage('home')">Cancel</button>
+    <div class="info-box green">✅ After payment, enter UTR ID and upload screenshot below</div>
+    <div class="fg"><label>UTR / Transaction ID *</label><input type="text" id="coUTR" placeholder="Enter UTR from payment receipt"></div>
+    <div class="fg"><label>Payment Screenshot *</label><input type="file" id="coProof" accept="image/*" style="color:var(--muted);"></div>
+    <button class="btn btn-p btn-blk mt14" onclick="submitProof()">✅ Submit & Confirm Payment</button>
+    <button class="btn btn-s btn-blk mt8" onclick="closeCheckout()">Cancel</button>
   </div>
 </div>
 
-<!-- BUY MODAL -->
+<!-- PLAN DETAIL MODAL -->
 <div id="buyModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-head">
-      <h3>Purchase Plan</h3>
-      <button class="modal-close" onclick="closeBuyModal()">×</button>
+  <div class="mbox">
+    <div class="mhead"><h3 id="bModalTitle">Plan Details</h3><button class="mcls" onclick="closeBuyModal()">×</button></div>
+    <div class="plan-detail-img" id="bImg">🔋</div>
+    <div class="srow" style="margin:0 0 10px;">
+      <div class="scard"><div class="lbl">Price</div><div class="val g">₹<span id="bPrice">0</span></div></div>
+      <div class="scard"><div class="lbl">Total Income</div><div class="val" style="color:#00E676;">₹<span id="bTotal">0</span></div></div>
     </div>
-    <div style="background:var(--grad);border-radius:12px;height:160px;margin-bottom:16px;"></div>
-    <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:14px;" id="buyPlanName"></div>
-    <div class="stat-row" style="margin:0 0 14px;">
-      <div class="stat-card"><div class="lbl">Price</div><div class="val green">₹<span id="buyPrice">0</span></div></div>
-      <div class="stat-card"><div class="lbl">Total Income</div><div class="val" style="color:#00E676;">₹<span id="buyIncome">0</span></div></div>
+    <div class="srow" style="margin:0 0 14px;">
+      <div class="scard"><div class="lbl">Daily Income</div><div class="val g">₹<span id="bDaily">0</span></div></div>
+      <div class="scard"><div class="lbl">Duration</div><div class="val"><span id="bDays">0</span> Days</div></div>
     </div>
-    <div class="stat-row" style="margin:0 0 16px;">
-      <div class="stat-card"><div class="lbl">Daily Income</div><div class="val green">₹<span id="buyDaily">0</span></div></div>
-      <div class="stat-card"><div class="lbl">Cycle Days</div><div class="val"><span id="buyCycle">0</span>d</div></div>
-    </div>
-    <button class="btn btn-primary btn-block" onclick="goToPayment()">Proceed to Payment</button>
-    <button class="btn btn-secondary btn-block mt-10" onclick="closeBuyModal()">Cancel</button>
+    <div class="info-box green" style="margin-bottom:14px;">💰 Daily income 20% · Auto credited every day</div>
+    <div id="bDesc" style="font-size:13px;color:var(--muted);margin-bottom:14px;"></div>
+    <button class="btn btn-p btn-blk" onclick="goPay()">💳 Pay Now via UPI</button>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center;">Balance se purchase karne ke liye deposit karein pehle</div>
+    <button class="btn btn-s btn-blk mt8" onclick="closeBuyModal()">Cancel</button>
   </div>
 </div>
 
 <!-- RECHARGE MODAL -->
 <div id="rechargeModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-head"><h3>Deposit / Recharge</h3><button class="modal-close" onclick="closeRechargeModal()">×</button></div>
-    <div id="rechargeError" class="err-msg hidden"></div>
-    <div class="fg"><label>Amount (₹)</label><input type="number" id="rechargeAmount" placeholder="Enter amount"></div>
+  <div class="mbox">
+    <div class="mhead"><h3>Deposit / Recharge</h3><button class="mcls" onclick="closeRechargeModal()">×</button></div>
+    <div id="rechErr" class="err hidden"></div>
+    <div class="fg"><label>Amount (₹)</label><input type="number" id="rechAmt" placeholder="Enter amount"></div>
     <div class="fg"><label>Payment Method</label>
-      <select id="paymentMethod" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
+      <select id="rechMethod" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
         <option>UPI</option><option>Bank Transfer</option><option>Wallet</option>
       </select>
     </div>
-    <div class="fg"><label>UTR ID / Transaction ID (optional)</label><input type="text" id="transactionId" placeholder="Enter UTR ID"></div>
-    <div class="fg"><label>Proof Screenshot</label><input type="file" id="proofImage" accept="image/*" style="color:var(--muted);"></div>
-    <button class="btn btn-primary btn-block mt-10" onclick="submitRecharge()">Submit</button>
+    <div class="fg"><label>UTR / Transaction ID</label><input type="text" id="rechTxn" placeholder="Enter UTR ID"></div>
+    <div class="fg"><label>Proof Screenshot</label><input type="file" id="rechProof" accept="image/*" style="color:var(--muted);"></div>
+    <button class="btn btn-p btn-blk mt8" onclick="submitRecharge()">Submit Deposit</button>
   </div>
 </div>
 
 <!-- WITHDRAW MODAL -->
 <div id="withdrawModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-head"><h3>Request Withdrawal</h3><button class="modal-close" onclick="closeWithdrawModal()">×</button></div>
-    <div id="withdrawError" class="err-msg hidden"></div>
-    <div class="fg"><label>Amount (₹)</label><input type="number" id="withdrawAmount" placeholder="Enter amount"></div>
+  <div class="mbox">
+    <div class="mhead"><h3>Request Withdrawal</h3><button class="mcls" onclick="closeWithdrawModal()">×</button></div>
+    <div id="wdErr" class="err hidden"></div>
+    <div class="fg"><label>Amount (₹)</label><input type="number" id="wdAmt" placeholder="Enter amount"></div>
     <div class="fg"><label>Bank Card</label>
-      <select id="bankCardSelect" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
+      <select id="wdCard" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
         <option value="">-- Select Bank Card --</option>
       </select>
-      <a href="#" onclick="goToPage('bank-cards')" style="color:var(--primary);font-size:12px;margin-top:6px;display:inline-block;font-weight:700;">+ Add New Card</a>
     </div>
-    <div style="background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);">
-      ⚡ Withdrawals processed within 24 hours
-    </div>
-    <button class="btn btn-primary btn-block" onclick="submitWithdraw()">Request Withdrawal</button>
+    <a href="#" onclick="goPage('bank-cards');closeWithdrawModal();" style="color:var(--p);font-size:12px;font-weight:700;display:inline-block;margin-bottom:14px;">+ Add New Card</a>
+    <div class="info-box warn">⚡ Withdrawals processed within 24 hours</div>
+    <button class="btn btn-p btn-blk mt8" onclick="submitWithdraw()">Request Withdrawal</button>
   </div>
 </div>
 
 <!-- ADD CARD MODAL -->
 <div id="addCardModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-head"><h3>Add Bank Card</h3><button class="modal-close" onclick="closeAddCardModal()">×</button></div>
-    <div id="addCardError" class="err-msg hidden"></div>
+  <div class="mbox">
+    <div class="mhead"><h3>Add Bank Card</h3><button class="mcls" onclick="closeAddCardModal()">×</button></div>
+    <div id="cardErr" class="err hidden"></div>
     <div class="fg"><label>Account Type</label>
-      <select id="cardType" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
+      <select id="cardType" onchange="toggleCardType()" style="width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;">
         <option value="bank">Bank Account</option><option value="upi">UPI</option>
       </select>
     </div>
-    <div id="bankFields">
-      <div class="fg"><label>Bank Name</label><input type="text" id="bankName" placeholder="e.g. HDFC Bank"></div>
-      <div class="fg"><label>Account Holder Name</label><input type="text" id="accountName" placeholder="Full name"></div>
-      <div class="fg"><label>Account Number</label><input type="text" id="accountNumber" placeholder="Account number"></div>
-      <div class="fg"><label>IFSC Code</label><input type="text" id="ifsc" placeholder="e.g. HDFC0000001"></div>
+    <div id="bankFlds">
+      <div class="fg"><label>Bank Name</label><input type="text" id="cBankName" placeholder="e.g. HDFC Bank"></div>
+      <div class="fg"><label>Account Holder Name</label><input type="text" id="cAccName" placeholder="Full name"></div>
+      <div class="fg"><label>Account Number</label><input type="text" id="cAccNum" placeholder="Account number"></div>
+      <div class="fg"><label>IFSC Code</label><input type="text" id="cIfsc" placeholder="e.g. HDFC0000001"></div>
     </div>
-    <div id="upiFields" style="display:none;">
-      <div class="fg"><label>UPI ID</label><input type="text" id="upiId" placeholder="e.g. user@upi"></div>
+    <div id="upiFlds" style="display:none;">
+      <div class="fg"><label>UPI ID</label><input type="text" id="cUpi" placeholder="e.g. user@upi"></div>
     </div>
-    <button class="btn btn-primary btn-block mt-10" onclick="submitAddCard()">Add Card</button>
+    <button class="btn btn-p btn-blk mt8" onclick="submitCard()">Add Card</button>
   </div>
 </div>
 
 <script>
 const API='/api';
 let token=localStorage.getItem('gp_token');
-let currentUser=null,currentCategory='vip',allPlans=[],settings={};
+let user=null,plans=[],selPlan=null,siteSettings={};
 
+// ─── INIT ───
 document.addEventListener('DOMContentLoaded',async()=>{
-  await loadSettings();
-  if(token){await loadUserProfile();showApp();loadDashboard();}
+  try{const r=await fetch(`${API}/settings`);siteSettings=await r.json();}catch(e){}
+  if(token){try{await loadProfile();showApp();loadAll();}catch(e){localStorage.removeItem('gp_token');showLogin();}}
   else showLogin();
-  document.getElementById('cardType').addEventListener('change',e=>{
-    document.getElementById('bankFields').style.display=e.target.value==='bank'?'block':'none';
-    document.getElementById('upiFields').style.display=e.target.value==='upi'?'block':'none';
-  });
 });
-
-function showToast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
-function showErrEl(id,msg){const e=document.getElementById(id);if(e){e.textContent=msg;e.classList.remove('hidden');}}
-function hideEl(id){const e=document.getElementById(id);if(e)e.classList.add('hidden');}
 
 function showLogin(){document.getElementById('page-login').classList.add('active');document.getElementById('app').classList.add('hidden');}
 function showApp(){document.getElementById('page-login').classList.remove('active');document.getElementById('app').classList.remove('hidden');}
-
 function showTab(t){
   document.getElementById('loginForm').classList.toggle('hidden',t!=='login');
-  document.getElementById('registerForm').classList.toggle('hidden',t!=='register');
-  document.getElementById('loginTab').classList.toggle('active',t==='login');
-  document.getElementById('regTab').classList.toggle('active',t==='register');
+  document.getElementById('regForm').classList.toggle('hidden',t!=='register');
+  document.getElementById('tab-login').classList.toggle('active',t==='login');
+  document.getElementById('tab-reg').classList.toggle('active',t==='register');
 }
 
-async function loadSettings(){try{const r=await fetch(`${API}/settings`);settings=await r.json();}catch(e){}}
+// ─── TOAST ───
+function toast(msg,ms=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms);}
 
-async function loadUserProfile(){
+// ─── AUTH ───
+async function doLogin(){
+  const phone=document.getElementById('lPhone').value.trim();
+  const pass=document.getElementById('lPass').value;
+  const e=document.getElementById('loginErr');e.classList.add('hidden');
+  if(!phone||!pass)return(e.textContent='Enter phone and password',e.classList.remove('hidden'));
   try{
-    const r=await fetch(`${API}/user/profile`,{headers:{Authorization:`Bearer ${token}`}});
-    currentUser=await r.json();updateUI();
-  }catch(e){}
+    const r=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password:pass})});
+    const d=await r.json();
+    if(d.error)return(e.textContent=d.error,e.classList.remove('hidden'));
+    token=d.token;localStorage.setItem('gp_token',token);user=d.user;
+    await loadProfile();showApp();loadAll();
+  }catch(ex){e.textContent='Login failed';e.classList.remove('hidden');}
 }
 
+async function doRegister(){
+  const phone=document.getElementById('rPhone').value.trim();
+  const pass=document.getElementById('rPass').value;
+  const conf=document.getElementById('rConf').value;
+  const invite=document.getElementById('rInvite').value.trim();
+  const agree=document.getElementById('rAgree').checked;
+  const er=document.getElementById('regErr'),ok=document.getElementById('regOk');
+  er.classList.add('hidden');ok.classList.add('hidden');
+  if(!phone||!pass)return(er.textContent='Enter phone and password',er.classList.remove('hidden'));
+  if(pass!==conf)return(er.textContent='Passwords do not match',er.classList.remove('hidden'));
+  if(pass.length<6)return(er.textContent='Password must be 6+ characters',er.classList.remove('hidden'));
+  if(!agree)return(er.textContent='Please agree to terms',er.classList.remove('hidden'));
+  try{
+    const r=await fetch(`${API}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password:pass,invite_code:invite||null})});
+    const d=await r.json();
+    if(d.error)return(er.textContent=d.error,er.classList.remove('hidden'));
+    ok.textContent='Registration successful! Logging in...';ok.classList.remove('hidden');
+    setTimeout(async()=>{token=d.token;localStorage.setItem('gp_token',token);user=d.user;await loadProfile();showApp();loadAll();},1500);
+  }catch(ex){er.textContent='Registration failed';er.classList.remove('hidden');}
+}
+
+function doLogout(){if(confirm('Logout karna chahte hain?')){localStorage.removeItem('gp_token');location.reload();}}
+
+// ─── PROFILE ───
+async function loadProfile(){
+  const r=await fetch(`${API}/user/profile`,{headers:{Authorization:`Bearer ${token}`}});
+  user=await r.json();
+  updateUI();
+}
+
+function f2(v){return parseFloat(v||0).toFixed(2);}
 function updateUI(){
-  if(!currentUser)return;
-  const fmt=v=>parseFloat(v||0).toFixed(2);
-  document.getElementById('heroBal').textContent=fmt(currentUser.balance);
-  document.getElementById('heroWithBal').textContent=fmt(currentUser.withdraw_balance);
-  document.getElementById('rechargeBalance').textContent=fmt(currentUser.balance);
-  document.getElementById('withdrawBalance').textContent=fmt(currentUser.withdraw_balance);
-  document.getElementById('totalRecharge').textContent=fmt(currentUser.total_recharge);
-  document.getElementById('totalWithdraw').textContent=fmt(currentUser.total_withdraw);
-  document.getElementById('profileName').textContent=currentUser.name||'User';
-  document.getElementById('profilePhone').textContent=currentUser.phone||'';
-  document.getElementById('userId').textContent=currentUser.id||'-';
-  document.getElementById('userCode').textContent=currentUser.invite_code||'-';
-  if(document.getElementById('myRefCode'))document.getElementById('myRefCode').value=currentUser.invite_code||'';
-  const img=document.getElementById('avatarImg'),icon=document.getElementById('avatarIcon');
-  if(currentUser.avatar){img.src=currentUser.avatar;img.style.display='block';icon.style.display='none';}
-  else{img.style.display='none';icon.style.display='';}
+  if(!user)return;
+  document.getElementById('heroBal').textContent=f2(user.balance);
+  document.getElementById('heroWBal').textContent=f2(user.withdraw_balance);
+  document.getElementById('sBal').textContent=f2(user.balance);
+  document.getElementById('sWBal').textContent=f2(user.withdraw_balance);
+  document.getElementById('mTR').textContent=f2(user.total_recharge);
+  document.getElementById('mTW').textContent=f2(user.total_withdraw);
+  document.getElementById('profName').textContent=user.name||'User';
+  document.getElementById('profPhone').textContent=user.phone||'';
+  document.getElementById('profId').textContent=user.id||'-';
+  document.getElementById('profCode').textContent=user.invite_code||'-';
+  if(document.getElementById('myRefCode'))document.getElementById('myRefCode').value=user.invite_code||'';
+  const heroVip=document.getElementById('heroVip');
+  if(heroVip)heroVip.textContent='VIP '+(user.vip_level||0);
+  const img=document.getElementById('avImg'),ic=document.getElementById('avIcon');
+  if(user.avatar){img.src=user.avatar;img.style.display='block';if(ic)ic.style.display='none';}
+  else{if(img)img.style.display='none';if(ic)ic.style.display='';}
 }
 
-async function loadDashboard(){loadPlans();loadTransactions();loadTeam();loadPurchases();loadBankCards();loadCommissions();}
+// ─── LOAD ALL ───
+function loadAll(){loadPlans();loadPurchases();loadTransactions();loadTeam();loadBankCards();loadCommissions();}
 
+// ─── PLANS ───
+let currentCat='vip';
 async function loadPlans(){
   try{
-    const r=await fetch(`${API}/plans?category=${currentCategory}`,{headers:{Authorization:`Bearer ${token}`}});
-    allPlans=await r.json();renderPlans();
-  }catch(e){}
+    const r=await fetch(`${API}/plans?category=${currentCat}`,{headers:{Authorization:`Bearer ${token}`}});
+    plans=await r.json();
+    renderPlans();
+  }catch(e){console.error(e);}
 }
 
 function renderPlans(){
-  const html=allPlans.map(p=>{
-    const img=p.image_url?`<img src="${p.image_url}" onerror="this.parentElement.innerHTML='🔋'">`:'<span>🔋</span>';
-    return`<div class="plan-card" onclick="openBuyModal(${p.id})">
-      <div class="plan-img">${img}</div>
-      <div class="plan-body">
-        <div class="plan-name">${p.name}</div>
-        <div class="plan-meta">Price: ₹${p.price}</div>
-        <div class="plan-meta">Income: ₹${p.total_income} | ${p.cycle_days}d</div>
-        <div class="plan-price">₹${p.daily_income}/day</div>
-        <button class="plan-buy">Purchase</button>
+  const icons={vip:'🔋',fixed:'🏦',event:'🎁'};
+  const html=plans.length?plans.map(p=>{
+    const img=p.image_url?`<img src="${p.image_url}" onerror="this.parentElement.innerHTML='${icons[p.category]||'💰'}'">`:icons[p.category]||'💰';
+    return`<div class="pcard" onclick="openBuyModal(${p.id})">
+      <div class="pimg">${img}</div>
+      <div class="pbody">
+        <div class="pname">${p.name}</div>
+        <div class="pmeta">💎 Daily: ₹${p.daily_income}</div>
+        <div class="pmeta">📅 ${p.cycle_days} Days · ₹${p.total_income} Total</div>
+        <div class="pprice">₹${p.price}</div>
+        <button class="pbuy">Buy Now</button>
       </div>
     </div>`;
-  }).join('');
-  const empty='<div class="empty-state"><i class="fas fa-box-open"></i><p>No plans available</p></div>';
-  document.getElementById('plansList').innerHTML=html||empty;
-  document.getElementById('earningsList').innerHTML=html||empty;
+  }).join(''):`<div class="empty" style="grid-column:span 2;"><i class="fas fa-box-open"></i><p>No plans available</p></div>`;
+  ['plansList','earningsList'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=html;});
 }
 
 function switchCat(btn,cat){
-  currentCategory=cat;
-  btn.closest('.tabs-bar').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');loadPlans();
+  currentCat=cat;
+  btn.closest('.tabs').querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadPlans();
+}
+
+// ─── BUY MODAL ───
+function openBuyModal(id){
+  const p=plans.find(x=>x.id===id);if(!p)return;
+  selPlan=p;
+  document.getElementById('bModalTitle').textContent=p.name;
+  document.getElementById('bPrice').textContent=p.price;
+  document.getElementById('bTotal').textContent=p.total_income;
+  document.getElementById('bDaily').textContent=p.daily_income;
+  document.getElementById('bDays').textContent=p.cycle_days;
+  document.getElementById('bDesc').textContent=p.description||'';
+  const bImg=document.getElementById('bImg');
+  if(p.image_url)bImg.innerHTML=`<img src="${p.image_url}" style="width:100%;height:140px;object-fit:cover;border-radius:12px;">`;
+  else bImg.textContent='🔋';
+  document.getElementById('buyModal').classList.add('active');
+}
+function closeBuyModal(){document.getElementById('buyModal').classList.remove('active');}
+
+// ─── CHECKOUT (QR PAYMENT PAGE) ───
+async function goPay(){
+  if(!selPlan)return;
+  closeBuyModal();
+  const co=document.getElementById('page-checkout');
+  co.classList.add('active');
+  document.getElementById('coAmount').textContent=selPlan.price;
+  document.getElementById('coAmt2').textContent=selPlan.price;
+  document.getElementById('coPlanName').textContent=selPlan.name;
+  document.getElementById('coUTR').value='';
+  document.getElementById('coProof').value='';
+  document.getElementById('coUPI').textContent='Loading...';
+  document.getElementById('coQR').innerHTML='<div style="text-align:center;color:var(--muted);"><i class="fas fa-spinner fa-spin" style="font-size:30px;"></i><div style="margin-top:8px;font-size:13px;">Generating QR...</div></div>';
+  try{
+    // Har baar fresh fetch — admin ne UPI ID change ki ho toh bhi sahi dikhega
+    const r=await fetch(`${API}/payment-qr/${selPlan.price}`);
+    const d=await r.json();
+    // UPI ID QR response se lo (server settings se latest aata hai)
+    document.getElementById('coUPI').textContent=d.upiId||'greenpower@upi';
+    document.getElementById('coAmt2').textContent=selPlan.price;
+    if(d.qr)document.getElementById('coQR').innerHTML=`<img src="${d.qr}">`;
+    else document.getElementById('coQR').innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;">Use UPI ID above</div></div>';
+  }catch{document.getElementById('coUPI').textContent='greenpower@upi';document.getElementById('coQR').innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;">QR unavailable</div></div>';}
+}
+function closeCheckout(){document.getElementById('page-checkout').classList.remove('active');}
+
+async function submitProof(){
+  const utr=document.getElementById('coUTR').value.trim();
+  const proof=document.getElementById('coProof').files[0];
+  if(!utr)return toast('⚠️ UTR ID enter karein');
+  if(!proof)return toast('⚠️ Screenshot upload karein');
+  if(!selPlan)return toast('⚠️ Plan not selected');
+  const fd=new FormData();
+  fd.append('amount',selPlan.price);
+  fd.append('payment_method','UPI');
+  fd.append('transaction_id',utr);
+  fd.append('proof',proof);
+  try{
+    const r=await fetch(`${API}/deposits`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await r.json();
+    if(d.error)return toast('❌ '+d.error);
+    toast('✅ Payment submitted! Admin approval ke baad balance add hoga.');
+    closeCheckout();
+    loadProfile();
+    goPage('deposit-history');
+    loadDepositHistory();
+  }catch{toast('❌ Error submitting payment');}
+}
+
+// ─── RECHARGE ───
+function openRechargeModal(){document.getElementById('rechErr').classList.add('hidden');document.getElementById('rechargeModal').classList.add('active');}
+function closeRechargeModal(){document.getElementById('rechargeModal').classList.remove('active');}
+async function submitRecharge(){
+  const amt=document.getElementById('rechAmt').value;
+  const er=document.getElementById('rechErr');er.classList.add('hidden');
+  if(!amt||amt<=0)return(er.textContent='Valid amount enter karein',er.classList.remove('hidden'));
+  const fd=new FormData();
+  fd.append('amount',amt);fd.append('payment_method',document.getElementById('rechMethod').value);
+  fd.append('transaction_id',document.getElementById('rechTxn').value);
+  const proof=document.getElementById('rechProof').files[0];if(proof)fd.append('proof',proof);
+  try{
+    const r=await fetch(`${API}/deposits`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await r.json();
+    if(d.error)return(er.textContent=d.error,er.classList.remove('hidden'));
+    toast('✅ Deposit submitted! Pending admin approval.');
+    closeRechargeModal();
+    loadDepositHistory();
+  }catch{er.textContent='Error submitting';er.classList.remove('hidden');}
+}
+
+// ─── WITHDRAW ───
+function openWithdrawModal(){document.getElementById('wdErr').classList.add('hidden');document.getElementById('withdrawModal').classList.add('active');}
+function closeWithdrawModal(){document.getElementById('withdrawModal').classList.remove('active');}
+async function submitWithdraw(){
+  const amt=document.getElementById('wdAmt').value;
+  const cardId=document.getElementById('wdCard').value;
+  const er=document.getElementById('wdErr');er.classList.add('hidden');
+  if(!amt||amt<=0)return(er.textContent='Valid amount enter karein',er.classList.remove('hidden'));
+  if(!cardId)return(er.textContent='Bank card select karein',er.classList.remove('hidden'));
+  try{
+    const r=await fetch(`${API}/withdrawals`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(amt),bank_card_id:parseInt(cardId)})});
+    const d=await r.json();
+    if(d.error)return(er.textContent=d.error,er.classList.remove('hidden'));
+    toast('✅ Withdrawal requested! 24 hours mein process hoga.');
+    closeWithdrawModal();
+    await loadProfile();
+    loadWithdrawHistory();
+  }catch{er.textContent='Error';er.classList.remove('hidden');}
+}
+
+// ─── BANK CARDS ───
+async function loadBankCards(){
+  try{
+    const r=await fetch(`${API}/user/bank-cards`,{headers:{Authorization:`Bearer ${token}`}});
+    const cards=await r.json();
+    const html=cards.length?cards.map(c=>`<div class="ccard" style="display:flex;justify-content:space-between;align-items:center;padding:14px;margin-bottom:8px;">
+      <div>
+        <b style="color:var(--text);">${c.type==='bank'?c.bank_name:'UPI'}</b><br>
+        <span style="font-size:12px;color:var(--muted);">${c.type==='bank'?(c.account_name+' · '+c.account_number):c.upi_id}</span>
+      </div>
+      <button onclick="deleteCard(${c.id})" class="btn btn-d" style="padding:6px 12px;font-size:12px;">Delete</button>
+    </div>`).join(''):'<div class="empty"><i class="fas fa-credit-card"></i><p>No cards added</p></div>';
+    const el=document.getElementById('bankCardsList');if(el)el.innerHTML=html;
+    // populate dropdown
+    const sel='<option value="">-- Select Bank Card --</option>'+cards.map(c=>`<option value="${c.id}">${c.type==='bank'?c.bank_name+' - '+c.account_number:'UPI - '+c.upi_id}</option>`).join('');
+    document.getElementById('wdCard').innerHTML=sel;
+  }catch(e){}
+}
+function toggleCardType(){
+  const t=document.getElementById('cardType').value;
+  document.getElementById('bankFlds').style.display=t==='bank'?'block':'none';
+  document.getElementById('upiFlds').style.display=t==='upi'?'block':'none';
+}
+function openAddCardModal(){document.getElementById('cardErr').classList.add('hidden');document.getElementById('addCardModal').classList.add('active');}
+function closeAddCardModal(){document.getElementById('addCardModal').classList.remove('active');}
+async function submitCard(){
+  const type=document.getElementById('cardType').value;
+  const data={type,bank_name:document.getElementById('cBankName').value,account_name:document.getElementById('cAccName').value,account_number:document.getElementById('cAccNum').value,ifsc:document.getElementById('cIfsc').value,upi_id:document.getElementById('cUpi').value};
+  const er=document.getElementById('cardErr');er.classList.add('hidden');
+  try{
+    const r=await fetch(`${API}/user/bank-cards`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const d=await r.json();
+    if(d.error)return(er.textContent=d.error,er.classList.remove('hidden'));
+    toast('✅ Card added!');closeAddCardModal();loadBankCards();
+  }catch{er.textContent='Error';er.classList.remove('hidden');}
+}
+async function deleteCard(id){
+  if(!confirm('Delete this card?'))return;
+  try{await fetch(`${API}/user/bank-cards/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});loadBankCards();}catch(e){}
+}
+
+// ─── HISTORY LOADERS ───
+async function loadPurchases(){
+  try{
+    const r=await fetch(`${API}/user/purchases`,{headers:{Authorization:`Bearer ${token}`}});
+    const ps=await r.json();
+    const html=ps.length?ps.map(p=>{
+      const pct=p.total_income>0?Math.min(100,Math.round((p.earned_income/p.total_income)*100)):0;
+      return`<div class="ccard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <b>${p.name||'Plan'}</b><span class="badge ${p.status}">${p.status.toUpperCase()}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Earned: <b style="color:var(--p);">₹${f2(p.earned_income)}</b> / ₹${f2(p.total_income)}</div>
+        <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <div style="font-size:11px;color:var(--muted);">Daily: ₹${p.daily_income} · ${p.days_remaining||0} days left · ${new Date(p.purchase_date).toLocaleDateString()}</div>
+      </div>`;
+    }).join(''):'<div class="empty"><i class="fas fa-shopping-bag"></i><p>No plans purchased yet</p></div>';
+    const el=document.getElementById('purchaseList');if(el)el.innerHTML=html;
+  }catch(e){}
 }
 
 async function loadTransactions(){
   try{
     const r=await fetch(`${API}/user/transactions`,{headers:{Authorization:`Bearer ${token}`}});
     const txs=await r.json();
-    const labels={deposit:'💰 Deposit',withdraw:'💸 Withdrawal',earning:'📈 Daily Earning',purchase:'🛒 Purchase',bonus:'🎁 Bonus',withdraw_approved:'✅ Approved'};
-    const html=Array.isArray(txs)&&txs.length?txs.map(t=>{
-      const a=parseFloat(t.amount),col=a>=0?'var(--success)':'var(--danger)';
-      return`<div class="hist-item">
-        <div class="hist-left">
-          <div class="h-type">${labels[t.type]||t.type}</div>
-          <div class="h-sub">${t.description||''}</div>
-          <div class="h-date">${new Date(t.created_at).toLocaleString()}</div>
-        </div>
-        <div class="hist-right">
-          <div class="h-amt" style="color:${col};">${a>=0?'+':''}₹${Math.abs(a)}</div>
-        </div>
+    const lbls={deposit:'💰 Deposit',withdraw:'💸 Withdrawal',earning:'📈 Daily Earning',purchase:'🛒 Purchase',bonus:'🎁 Bonus',withdraw_approved:'✅ Withdrawal Approved'};
+    const html=txs.length?txs.map(t=>{
+      const a=parseFloat(t.amount);
+      return`<div class="hitem">
+        <div><div class="htype">${lbls[t.type]||t.type}</div><div class="hsub">${t.description||''}</div><div class="hdate">${new Date(t.created_at).toLocaleString()}</div></div>
+        <div><div class="hamt" style="color:${a>=0?'var(--p)':'var(--danger)'};">${a>=0?'+':''}₹${Math.abs(a).toFixed(2)}</div></div>
       </div>`;
-    }).join(''):'<div class="empty-state"><i class="fas fa-inbox"></i><p>No transactions yet</p></div>';
+    }).join(''):'<div class="empty"><i class="fas fa-inbox"></i><p>No transactions yet</p></div>';
     const el=document.getElementById('fundingList');if(el)el.innerHTML=html;
+  }catch(e){}
+}
+
+async function loadDepositHistory(){
+  try{
+    const r=await fetch(`${API}/deposits`,{headers:{Authorization:`Bearer ${token}`}});
+    const ds=await r.json();
+    const html=ds.length?ds.map(d=>`<div class="hitem">
+      <div><div class="htype">💰 Deposit</div><div class="hsub">${d.payment_method||'UPI'}${d.transaction_id?' · UTR: '+d.transaction_id:''}</div><div class="hdate">${new Date(d.created_at).toLocaleString()}</div></div>
+      <div><div class="hamt" style="color:var(--p);">+₹${f2(d.amount)}</div><div><span class="badge ${d.status}">${d.status.toUpperCase()}</span></div></div>
+    </div>`).join(''):'<div class="empty"><i class="fas fa-arrow-circle-down"></i><p>No deposits yet</p></div>';
+    const el=document.getElementById('depositHistList');if(el)el.innerHTML=html;
+  }catch(e){}
+}
+
+async function loadWithdrawHistory(){
+  try{
+    const r=await fetch(`${API}/withdrawals`,{headers:{Authorization:`Bearer ${token}`}});
+    const ws=await r.json();
+    const html=ws.length?ws.map(w=>{
+      const meth=w.upi_id?'UPI: '+w.upi_id:(w.account_number?'Bank: ****'+w.account_number.slice(-4):'--');
+      return`<div class="hitem">
+        <div><div class="htype">💸 Withdrawal</div><div class="hsub">${meth}</div><div class="hdate">${new Date(w.created_at).toLocaleString()}</div>${w.note?`<div style="font-size:11px;color:var(--danger);">Note: ${w.note}</div>`:''}</div>
+        <div><div class="hamt" style="color:var(--danger);">-₹${f2(w.amount)}</div><div><span class="badge ${w.status}">${w.status.toUpperCase()}</span></div></div>
+      </div>`;
+    }).join(''):'<div class="empty"><i class="fas fa-arrow-circle-up"></i><p>No withdrawals yet</p></div>';
+    const el=document.getElementById('withdrawHistList');if(el)el.innerHTML=html;
   }catch(e){}
 }
 
@@ -681,90 +803,10 @@ async function loadTeam(){
     const r=await fetch(`${API}/user/team`,{headers:{Authorization:`Bearer ${token}`}});
     const d=await r.json();
     document.getElementById('teamCount').textContent=d.team_count||0;
-    document.getElementById('teamComm').textContent=parseFloat(d.total_commission||0).toFixed(2);
-    if(document.getElementById('myRefCode'))document.getElementById('myRefCode').value=currentUser?.invite_code||'';
-    const html=d.team&&d.team.length?d.team.map(m=>`<div class="team-member"><div class="team-avatar">${(m.phone||'?')[0]}</div><div class="team-info"><div class="t-phone">${m.phone}</div><div class="t-date">Joined ${new Date(m.created_at).toLocaleDateString()}</div></div></div>`).join(''):'<div class="empty-state"><i class="fas fa-user-friends"></i><p>No team members yet</p></div>';
+    document.getElementById('teamComm').textContent=f2(d.total_commission||0);
+    if(document.getElementById('myRefCode'))document.getElementById('myRefCode').value=user?.invite_code||'';
+    const html=d.team&&d.team.length?d.team.map(m=>`<div class="tmember"><div class="tavatar">${(m.phone||'?')[0]}</div><div><div style="font-size:13px;font-weight:700;">${m.phone}</div><div style="font-size:11px;color:var(--muted);">Joined ${new Date(m.created_at).toLocaleDateString()}</div></div></div>`).join(''):'<div class="empty"><i class="fas fa-user-friends"></i><p>No team members yet</p></div>';
     document.getElementById('teamList').innerHTML=html;
-  }catch(e){}
-}
-
-async function loadPurchases(){
-  try{
-    const r=await fetch(`${API}/user/purchases`,{headers:{Authorization:`Bearer ${token}`}});
-    const ps=await r.json();
-    const html=Array.isArray(ps)&&ps.length?ps.map(p=>{
-      const sc=p.status==='active'?'var(--success)':p.status==='completed'?'var(--muted)':'var(--danger)';
-      const pct=p.total_income>0?Math.min(100,Math.round((p.earned_income/p.total_income)*100)):0;
-      return`<div class="c-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <b style="color:var(--text);">${p.name||'Plan'}</b>
-          <span class="badge ${p.status}">${p.status}</span>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Earned: <b style="color:var(--success);">₹${p.earned_income||0}</b> / ₹${p.total_income}</div>
-        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-        <div style="font-size:11px;color:var(--muted);">Daily: ₹${p.daily_income} · ${p.days_remaining||0} days left · ${new Date(p.purchase_date).toLocaleDateString()}</div>
-      </div>`;
-    }).join(''):'<div class="empty-state"><i class="fas fa-shopping-bag"></i><p>No purchases yet</p></div>';
-    const el=document.getElementById('purchaseList');if(el)el.innerHTML=html;
-  }catch(e){}
-}
-
-async function loadDepositHistory(){
-  try{
-    const r=await fetch(`${API}/deposits`,{headers:{Authorization:`Bearer ${token}`}});
-    const ds=await r.json();
-    const html=Array.isArray(ds)&&ds.length?ds.map(d=>`<div class="hist-item">
-      <div class="hist-left">
-        <div class="h-type">💰 Deposit</div>
-        <div class="h-sub">${d.payment_method||'UPI'}${d.transaction_id?' · UTR: '+d.transaction_id:''}</div>
-        <div class="h-date">${new Date(d.created_at).toLocaleString()}</div>
-      </div>
-      <div class="hist-right">
-        <div class="h-amt" style="color:var(--success);">+₹${d.amount}</div>
-        <div><span class="badge ${d.status}">${d.status.toUpperCase()}</span></div>
-      </div>
-    </div>`).join(''):'<div class="empty-state"><i class="fas fa-arrow-circle-down"></i><p>No deposits yet</p></div>';
-    const el=document.getElementById('depositHistoryList');if(el)el.innerHTML=html;
-  }catch(e){}
-}
-
-async function loadWithdrawHistory(){
-  try{
-    const r=await fetch(`${API}/withdrawals`,{headers:{Authorization:`Bearer ${token}`}});
-    const ws=await r.json();
-    const html=Array.isArray(ws)&&ws.length?ws.map(w=>{
-      const method=w.upi_id?'UPI: '+w.upi_id:(w.account_number?'Bank: ****'+w.account_number.slice(-4):'--');
-      return`<div class="hist-item">
-        <div class="hist-left">
-          <div class="h-type">💸 Withdrawal</div>
-          <div class="h-sub">${method}</div>
-          <div class="h-date">${new Date(w.created_at).toLocaleString()}</div>
-          ${w.note?`<div style="font-size:11px;color:var(--danger);">Note: ${w.note}</div>`:''}
-        </div>
-        <div class="hist-right">
-          <div class="h-amt" style="color:var(--danger);">-₹${w.amount}</div>
-          <div><span class="badge ${w.status}">${w.status.toUpperCase()}</span></div>
-        </div>
-      </div>`;
-    }).join(''):'<div class="empty-state"><i class="fas fa-arrow-circle-up"></i><p>No withdrawals yet</p></div>';
-    const el=document.getElementById('withdrawHistoryList');if(el)el.innerHTML=html;
-  }catch(e){}
-}
-
-async function loadBankCards(){
-  try{
-    const r=await fetch(`${API}/user/bank-cards`,{headers:{Authorization:`Bearer ${token}`}});
-    const cs=await r.json();
-    const html=cs.map(c=>`<div class="c-card" style="display:flex;justify-content:space-between;align-items:center;padding:14px;">
-      <div>
-        <b style="color:var(--text);">${c.type==='bank'?c.bank_name:'UPI'}</b><br>
-        <span style="font-size:12px;color:var(--muted);">${c.type==='bank'?c.account_name+' - '+c.account_number:c.upi_id}</span>
-      </div>
-      <button onclick="deleteCard(${c.id})" class="btn btn-danger" style="padding:6px 12px;font-size:12px;">Delete</button>
-    </div>`).join('');
-    document.getElementById('bankCardsList').innerHTML=html||'<div class="empty-state"><i class="fas fa-credit-card"></i><p>No cards added</p></div>';
-    const sel='<option value="">-- Select Bank Card --</option>'+cs.map(c=>`<option value="${c.id}">${c.type==='bank'?c.bank_name:'UPI'} - ${c.type==='bank'?c.account_number:c.upi_id}</option>`).join('');
-    document.getElementById('bankCardSelect').innerHTML=sel;
   }catch(e){}
 }
 
@@ -772,20 +814,38 @@ async function loadCommissions(){
   try{
     const r=await fetch(`${API}/user/commissions`,{headers:{Authorization:`Bearer ${token}`}});
     const d=await r.json();
-    const html=d.commissions&&d.commissions.length?d.commissions.map(c=>`<div class="hist-item">
-      <div class="hist-left"><div class="h-type">🎁 Commission</div><div class="h-sub">From: ${c.from_phone||'Unknown'}</div><div class="h-date">${new Date(c.created_at).toLocaleDateString()}</div></div>
-      <div class="hist-right"><div class="h-amt" style="color:var(--success);">+₹${c.amount}</div></div>
-    </div>`).join(''):'<div class="empty-state"><i class="fas fa-star"></i><p>No commissions yet</p></div>';
-    const el=document.getElementById('commissionList');if(el)el.innerHTML=html;
+    const html=d.commissions&&d.commissions.length?d.commissions.map(c=>`<div class="hitem">
+      <div><div class="htype">🎁 Commission</div><div class="hsub">From: ${c.from_phone||'Team Member'}</div><div class="hdate">${new Date(c.created_at).toLocaleDateString()}</div></div>
+      <div><div class="hamt" style="color:var(--p);">+₹${f2(c.amount)}</div></div>
+    </div>`).join(''):'<div class="empty"><i class="fas fa-star"></i><p>No commissions yet</p></div>';
+    const el=document.getElementById('commList');if(el)el.innerHTML=html;
   }catch(e){}
 }
 
-// NAV
-function goToPage(page){
+// ─── AVATAR ───
+async function uploadAvatar(input){
+  const file=input.files[0];if(!file)return;
+  toast('Uploading photo...');
+  const fd=new FormData();fd.append('avatar',file);
+  try{
+    const r=await fetch(`${API}/user/profile`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:fd});
+    const d=await r.json();
+    if(d.success&&d.user){user={...user,...d.user};updateUI();toast('✅ Photo updated!');}
+    else toast('Upload failed');
+  }catch{toast('Upload failed');}
+  input.value='';
+}
+
+// ─── NAVIGATION ───
+function goPage(page){
+  // hide all pages inside app
   document.querySelectorAll('#app .page').forEach(p=>p.classList.remove('active'));
-  const t=document.getElementById('page-'+page);if(!t)return;
+  document.getElementById('page-checkout').classList.remove('active');
+  const t=document.getElementById('page-'+page);
+  if(!t)return;
   t.classList.add('active');
   document.querySelector('.app-body')?.scrollTo(0,0);
+  // load data on demand
   if(page==='purchase-history')loadPurchases();
   else if(page==='deposit-history')loadDepositHistory();
   else if(page==='withdraw-history')loadWithdrawHistory();
@@ -793,172 +853,17 @@ function goToPage(page){
   else if(page==='commissions')loadCommissions();
   else if(page==='bank-cards')loadBankCards();
   else if(page==='team')loadTeam();
-  else if(page==='home'){loadUserProfile();loadPlans();}
+  else if(page==='home'){loadProfile();loadPlans();}
 }
-
 function navTo(page,btn){
-  goToPage(page);
-  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+  goPage(page);
+  document.querySelectorAll('.nbtn').forEach(n=>n.classList.remove('active'));
   if(btn)btn.classList.add('active');
 }
 
-// AUTH
-async function handleLogin(){
-  hideEl('loginError');
-  const phone=document.getElementById('loginPhone').value;
-  const password=document.getElementById('loginPassword').value;
-  if(!phone||!password)return showErrEl('loginError','Enter phone and password');
-  try{
-    const r=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password})});
-    const d=await r.json();
-    if(d.error)return showErrEl('loginError',d.error);
-    token=d.token;localStorage.setItem('gp_token',token);currentUser=d.user;
-    await loadUserProfile();showApp();loadDashboard();
-  }catch(e){showErrEl('loginError','Login failed');}
-}
-
-async function handleRegister(){
-  hideEl('registerError');hideEl('registerSuccess');
-  const phone=document.getElementById('regPhone').value;
-  const password=document.getElementById('regPassword').value;
-  const confirm=document.getElementById('regConfirm').value;
-  const invite=document.getElementById('inviteCode').value;
-  const agree=document.getElementById('agreeTerms').checked;
-  if(!phone||!password)return showErrEl('registerError','Enter phone and password');
-  if(password!==confirm)return showErrEl('registerError','Passwords do not match');
-  if(password.length<6)return showErrEl('registerError','Password must be 6+ characters');
-  if(!agree)return showErrEl('registerError','Please agree to terms');
-  try{
-    const r=await fetch(`${API}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password,invite_code:invite||null})});
-    const d=await r.json();
-    if(d.error)return showErrEl('registerError',d.error);
-    document.getElementById('registerSuccess').textContent='Registration successful! Logging in...';
-    document.getElementById('registerSuccess').classList.remove('hidden');
-    setTimeout(async()=>{token=d.token;localStorage.setItem('gp_token',token);currentUser=d.user;await loadUserProfile();showApp();loadDashboard();},1500);
-  }catch(e){showErrEl('registerError','Registration failed');}
-}
-
-function handleLogout(){if(confirm('Are you sure?')){localStorage.removeItem('gp_token');location.reload();}}
-
-// PLANS
-let selectedPlanId=null;
-function openBuyModal(id){
-  const p=allPlans.find(x=>x.id===id);if(!p)return;
-  selectedPlanId=id;
-  document.getElementById('buyPlanName').textContent=p.name;
-  document.getElementById('buyPrice').textContent=p.price;
-  document.getElementById('buyIncome').textContent=p.total_income;
-  document.getElementById('buyDaily').textContent=p.daily_income;
-  document.getElementById('buyCycle').textContent=p.cycle_days;
-  document.getElementById('buyModal').classList.add('active');
-}
-function closeBuyModal(){document.getElementById('buyModal').classList.remove('active');}
-
-async function goToPayment(){
-  const p=allPlans.find(x=>x.id===selectedPlanId);if(!p)return;
-  closeBuyModal();
-  document.getElementById('page-checkout').classList.remove('hidden');
-  document.querySelectorAll('#app .page').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page-checkout').classList.add('active');
-  document.getElementById('checkoutAmount').textContent=p.price;
-  document.getElementById('manualAmount').textContent=p.price;
-  document.getElementById('transactionRef').value='';
-  document.getElementById('paymentProof').value='';
-  document.getElementById('paymentUPI').textContent=settings.upi_id||'greenpower@upi';
-  document.getElementById('paymentQR').innerHTML='<div style="text-align:center;color:var(--muted);"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;font-size:13px;">Loading QR...</div></div>';
-  try{
-    const r=await fetch(`${API}/payment-qr/${p.price}`);
-    const d=await r.json();
-    if(d.qr)document.getElementById('paymentQR').innerHTML=`<img src="${d.qr}" style="width:220px;height:220px;border-radius:10px;">`;
-    else document.getElementById('paymentQR').innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;font-size:13px;">QR unavailable — use UPI ID below</div></div>';
-  }catch(e){document.getElementById('paymentQR').innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;"><i class="fas fa-qrcode" style="font-size:40px;opacity:.3;"></i><div style="margin-top:8px;font-size:13px;">QR unavailable</div></div>';}
-}
-
-async function submitPaymentProof(){
-  const tx=document.getElementById('transactionRef').value.trim();
-  const proof=document.getElementById('paymentProof').files[0];
-  const p=allPlans.find(x=>x.id===selectedPlanId);
-  if(!tx)return showToast('⚠️ Enter UTR ID');
-  if(!proof)return showToast('⚠️ Upload payment screenshot');
-  if(!p)return showToast('⚠️ Plan not found');
-  const fd=new FormData();
-  fd.append('amount',p.price);fd.append('payment_method','UPI');fd.append('transaction_id',tx);fd.append('proof',proof);
-  try{
-    const r=await fetch(`${API}/deposits`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:fd});
-    const d=await r.json();
-    if(d.error)return showToast('❌ '+d.error);
-    showToast('✅ Payment submitted! Awaiting admin approval.');
-    goToPage('home');await loadUserProfile();
-  }catch(e){showToast('❌ Error submitting proof');}
-}
-
-// RECHARGE
-function openRechargeModal(){hideEl('rechargeError');document.getElementById('rechargeModal').classList.add('active');}
-function closeRechargeModal(){document.getElementById('rechargeModal').classList.remove('active');document.getElementById('rechargeAmount').value='';document.getElementById('transactionId').value='';document.getElementById('proofImage').value='';}
-async function submitRecharge(){
-  const amount=document.getElementById('rechargeAmount').value;
-  if(!amount||amount<=0)return showErrEl('rechargeError','Enter valid amount');
-  const fd=new FormData();fd.append('amount',amount);fd.append('payment_method',document.getElementById('paymentMethod').value);fd.append('transaction_id',document.getElementById('transactionId').value);
-  const proof=document.getElementById('proofImage').files[0];if(proof)fd.append('proof',proof);
-  try{
-    const r=await fetch(`${API}/deposits`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:fd});
-    const d=await r.json();if(d.error)return showErrEl('rechargeError',d.error);
-    showToast('✅ Deposit submitted! Pending approval.');closeRechargeModal();
-  }catch(e){showErrEl('rechargeError','Error submitting deposit');}
-}
-
-// WITHDRAW
-function openWithdrawModal(){hideEl('withdrawError');document.getElementById('withdrawModal').classList.add('active');}
-function closeWithdrawModal(){document.getElementById('withdrawModal').classList.remove('active');document.getElementById('withdrawAmount').value='';}
-async function submitWithdraw(){
-  const amount=document.getElementById('withdrawAmount').value;
-  const cardId=document.getElementById('bankCardSelect').value;
-  if(!amount||amount<=0)return showErrEl('withdrawError','Enter valid amount');
-  if(!cardId)return showErrEl('withdrawError','Select a bank card');
-  try{
-    const r=await fetch(`${API}/withdrawals`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(amount),bank_card_id:parseInt(cardId)})});
-    const d=await r.json();if(d.error)return showErrEl('withdrawError',d.error);
-    showToast('✅ Withdrawal requested! Processing in 24 hours.');
-    closeWithdrawModal();await loadUserProfile();
-    // Auto-load withdrawal history so it's fresh
-    loadWithdrawHistory();
-  }catch(e){showErrEl('withdrawError','Error submitting withdrawal');}
-}
-
-// BANK CARDS
-function openAddCardModal(){hideEl('addCardError');document.getElementById('addCardModal').classList.add('active');}
-function closeAddCardModal(){document.getElementById('addCardModal').classList.remove('active');['bankName','accountName','accountNumber','ifsc','upiId'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});}
-async function submitAddCard(){
-  const type=document.getElementById('cardType').value;
-  const data={type,bank_name:document.getElementById('bankName').value,account_name:document.getElementById('accountName').value,account_number:document.getElementById('accountNumber').value,ifsc:document.getElementById('ifsc').value,upi_id:document.getElementById('upiId').value};
-  try{
-    const r=await fetch(`${API}/user/bank-cards`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(data)});
-    const result=await r.json();if(result.error)return showErrEl('addCardError',result.error);
-    showToast('✅ Card added successfully!');closeAddCardModal();loadBankCards();
-  }catch(e){showErrEl('addCardError','Error adding card');}
-}
-async function deleteCard(id){
-  if(!confirm('Delete this card?'))return;
-  try{await fetch(`${API}/user/bank-cards/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});loadBankCards();}catch(e){}
-}
-
-// AVATAR
-async function uploadAvatar(input){
-  const file=input.files[0];if(!file)return;
-  const s=document.getElementById('avatarStatus');s.style.display='block';s.textContent='Uploading...';s.style.color='var(--primary)';
-  const fd=new FormData();fd.append('avatar',file);
-  try{
-    const r=await fetch(`${API}/user/profile`,{method:'PUT',headers:{Authorization:`Bearer ${token}`},body:fd});
-    const d=await r.json();
-    if(d.success&&d.user){currentUser={...currentUser,...d.user};updateUI();s.textContent='✅ Photo updated!';s.style.color='var(--success)';}
-    else{s.textContent='Upload failed';s.style.color='var(--danger)';}
-  }catch(e){s.textContent='Upload failed';s.style.color='var(--danger)';}
-  setTimeout(()=>{s.style.display='none';},2000);input.value='';
-}
-
-// UTILS
-function copyRefCode(){const code=currentUser?.invite_code||'';navigator.clipboard?.writeText(code);showToast('✅ Code copied: '+code);}
-function shareCode(){const code=currentUser?.invite_code||'';if(navigator.share){navigator.share({title:'Green Power',text:'Join Green Power with my code: '+code});}else{showToast('My Code: '+code);}}
+// ─── UTILS ───
+function copyCode(){const c=user?.invite_code||'';navigator.clipboard?.writeText(c);toast('✅ Code copied: '+c);}
+function shareCode(){const c=user?.invite_code||'';if(navigator.share)navigator.share({title:'Green Power',text:'Join with my code: '+c,url:window.location.href});else{navigator.clipboard?.writeText(c);toast('Code copied: '+c);}}
 </script>
 </body>
 </html>
