@@ -25,7 +25,8 @@
     .error { background: #ffe6e6; color: #e74c3c; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
 
     /* Admin Dashboard */
-    #admin-panel { display: flex; height: 100vh; }
+    #admin-panel { height: 100vh; }
+    #admin-panel:not(.hidden) { display: flex; }
     .sidebar { width: 250px; background: var(--dark); color: white; padding: 20px 0; overflow-y: auto; }
     .sidebar-item { padding: 15px 20px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.3s; }
     .sidebar-item:hover { background: rgba(0,0,0,0.2); border-left-color: var(--primary); }
@@ -103,7 +104,7 @@
 </div>
 
 <!-- ADMIN PANEL -->
-<div id="admin-panel" class="hidden" style="display: flex;">
+<div id="admin-panel" class="hidden">
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-title">ADMIN MENU</div>
@@ -794,11 +795,9 @@
       // Save settings to Supabase so UPI ID persists
       const saved = await saveSettings(true);
       if (saved) {
-        alert('✅ QR Generated & Settings Saved!
-UPI: ' + upiId);
+        alert('✅ QR Generated & Settings Saved! UPI: ' + upiId);
       } else {
-        alert('✅ QR Generated!
-⚠️ Settings save nahi hui — "Save All Settings" manually click karein.');
+        alert('✅ QR Generated! Settings save nahi hui — Save All Settings manually click karein.');
       }
     } catch (e) {
       alert('Error: ' + e.message);
