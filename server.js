@@ -14,12 +14,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'greenpower_secret_key_2024!@#';
 
-console.log("URL =", process.env.SUPABASE_URL);
-console.log("KEY =", process.env.SUPABASE_KEY);
 
 const supabase = createClient(
-  "https://qytwrhsdjuymaoyfufzo.supabase.co",
-  "sb_publishable_mdI0yeEjWK6kKiLr4EUkmA_ZzgXQzvj"
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
 );
 
 
