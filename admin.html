@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Green Power | Admin Panel</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
     :root { --primary: #00BCD4; --dark: #0097A7; --light: #f5f5f5; --card: #fff; --text: #333; --border: #ddd; }
@@ -759,7 +760,7 @@
 
   async function generatePaymentQR() {
     const upiId = document.getElementById('upi_id').value.trim();
-    const upiName = document.getElementById('upi_name').value.trim();
+    const upiName = document.getElementById('upi_name').value.trim() || 'GreenPower';
     if (!upiId) return alert('Enter UPI ID first');
 
     const btn = event.target;
@@ -767,29 +768,40 @@
     btn.textContent = '⏳ Generating...';
 
     try {
-      // Step 1: Generate QR preview
-      const res = await fetch(`${API}/generate-qr`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ upi_id: upiId })
-      });
-      const data = await res.json();
-      if (data.qr) {
-        document.getElementById('qrImage').src = data.qr;
-        document.getElementById('qrPreview').style.display = 'block';
+      // Generate QR client-side (no server call needed)
+      const upiString = 'upi://pay?pa=' + upiId + '&pn=' + encodeURIComponent(upiName) + '&cu=INR';
+      const qrPreview = document.getElementById('qrPreview');
+      const qrContainer = document.getElementById('qrImage').parentNode;
 
-        // Step 2: Auto-save settings so UPI ID persists in Supabase
-        const saved = await saveSettings(true); // silent = true (no extra alert)
-        if (saved) {
-          alert('✅ QR Code Generated & Settings Saved!\nUsers will see this QR during checkout.');
-        } else {
-          alert('✅ QR Code Generated (preview only).\n⚠️ Settings could not be saved — please click "Save All Settings" manually.');
-        }
+      // Clear old QR and replace img with div for QRCode.js
+      document.getElementById('qrImage').style.display = 'none';
+      let qrDiv = document.getElementById('adminQRDiv');
+      if (!qrDiv) {
+        qrDiv = document.createElement('div');
+        qrDiv.id = 'adminQRDiv';
+        qrDiv.style.cssText = 'display:inline-block;margin:10px auto;';
+        qrContainer.insertBefore(qrDiv, document.getElementById('qrImage'));
+      }
+      qrDiv.innerHTML = '';
+      new QRCode(qrDiv, {
+        text: upiString,
+        width: 200, height: 200,
+        colorDark: '#000000', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      qrPreview.style.display = 'block';
+
+      // Save settings to Supabase so UPI ID persists
+      const saved = await saveSettings(true);
+      if (saved) {
+        alert('✅ QR Generated & Settings Saved!
+UPI: ' + upiId);
       } else {
-        alert('❌ QR generation failed: ' + (data.error || 'Unknown error'));
+        alert('✅ QR Generated!
+⚠️ Settings save nahi hui — "Save All Settings" manually click karein.');
       }
     } catch (e) {
-      alert('Error generating QR code');
+      alert('Error: ' + e.message);
     } finally {
       btn.disabled = false;
       btn.textContent = '🔄 Generate Payment QR Code';
