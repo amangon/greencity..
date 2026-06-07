@@ -702,11 +702,12 @@ async function submitProof(){
   const fd=new FormData();
   fd.append('amount',selPlan.price);fd.append('payment_method','UPI');
   fd.append('transaction_id',utr);fd.append('proof',proof);
+  fd.append('plan_id',selPlan.id);
   try{
     const r=await fetch(`${API}/deposits`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:fd});
     const d=await r.json();
     if(d.error)return toast('Error: '+d.error);
-    toast('Payment submitted! Admin approval ke baad balance add hoga.');
+    toast('Payment submitted! Admin approval ke baad plan activate ho jayega.');
     closeCheckout();loadProfile();goPage('deposit-history');loadDepositHistory();
   }catch{toast('Error submitting payment');}
 }
@@ -909,5 +910,3 @@ function shareCode(){const c=user?.invite_code||'';if(navigator.share)navigator.
 </script>
 </body>
 </html>
-Done
-

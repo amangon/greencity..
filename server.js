@@ -272,7 +272,7 @@ app.post('/api/plans/purchase', auth, async (req, res) => {
 // ===== DEPOSITS =====
 app.post('/api/deposits', auth, upload.single('proof'), async (req, res) => {
   try {
-    const { amount, payment_method, transaction_id } = req.body;
+    const { amount, payment_method, transaction_id, plan_id } = req.body;
     if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
 
     const { data: minSetting } = await supabase.from('settings').select('value').eq('key', 'min_deposit').single();
@@ -280,8 +280,16 @@ app.post('/api/deposits', auth, upload.single('proof'), async (req, res) => {
     if (parseFloat(amount) < minDep) return res.status(400).json({ error: `Min: Rs.${minDep}` });
 
     const proof = req.file ? `/uploads/${req.file.filename}` : '';
-    await supabase.from('deposits').insert({ user_id: req.user.id, amount: parseFloat(amount), payment_method: payment_method || 'UPI', proof_image: proof, transaction_id: transaction_id || '' });
+    const insertData = {
+      user_id: req.user.id,
+      amount: parseFloat(amount),
+      payment_method: payment_method || 'UPI',
+      proof_image: proof,
+      transaction_id: transaction_id || ''
+    };
+    if (plan_id) insertData.plan_id = parseInt(plan_id);
 
+    await supabase.from('deposits').insert(insertData);
     res.json({ success: true, message: 'Deposit submitted. Pending approval.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -475,10 +483,52 @@ app.put('/api/admin/deposits/:id/approve', adminAuth, async (req, res) => {
   try {
     const { data: deposit } = await supabase.from('deposits').select('*').eq('id', req.params.id).single();
     if (!deposit || deposit.status !== 'pending') return res.status(400).json({ error: 'Invalid' });
+
     await supabase.from('deposits').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', req.params.id);
-    const { data: user } = await supabase.from('users').select('balance, total_recharge').eq('id', deposit.user_id).single();
-    await supabase.from('users').update({ balance: user.balance + deposit.amount, total_recharge: user.total_recharge + deposit.amount }).eq('id', deposit.user_id);
-    await supabase.from('transactions').insert({ user_id: deposit.user_id, type: 'deposit', amount: deposit.amount, description: 'Deposit approved' });
+    const { data: user } = await supabase.from('users').select('balance, total_recharge, withdraw_balance, invited_by').eq('id', deposit.user_id).single();
+
+    const newBalance = user.balance + deposit.amount;
+    await supabase.from('users').update({ balance: newBalance, total_recharge: user.total_recharge + deposit.amount }).eq('id', deposit.user_id);
+    await supabase.from('transactions').insert({ user_id: deposit.user_id, type: 'deposit', amount: deposit.amount, description: 'Deposit approved', balance_after: newBalance });
+
+    // Auto-purchase plan if deposit is linked to a plan
+    if (deposit.plan_id) {
+      const { data: plan } = await supabase.from('investment_plans').select('*').eq('id', deposit.plan_id).eq('is_active', 1).single();
+      if (plan && newBalance >= plan.price) {
+        const balAfterPurchase = newBalance - plan.price;
+        await supabase.from('users').update({ balance: balAfterPurchase }).eq('id', deposit.user_id);
+
+        const expireDate = new Date(Date.now() + plan.cycle_days * 86400000).toISOString();
+        await supabase.from('user_purchases').insert({
+          user_id: deposit.user_id,
+          plan_id: plan.id,
+          expire_date: expireDate,
+          daily_income: plan.daily_income,
+          total_income: plan.total_income,
+          days_remaining: plan.cycle_days,
+          status: 'active'
+        });
+
+        await supabase.from('transactions').insert({
+          user_id: deposit.user_id,
+          type: 'purchase',
+          amount: -plan.price,
+          description: `Auto-purchased: ${plan.name}`,
+          balance_after: balAfterPurchase
+        });
+
+        // Referral commission
+        if (user.invited_by) {
+          const { data: referrer } = await supabase.from('users').select('*').eq('invite_code', user.invited_by).single();
+          if (referrer) {
+            const comm = plan.price * 0.1;
+            await supabase.from('users').update({ withdraw_balance: referrer.withdraw_balance + comm }).eq('id', referrer.id);
+            await supabase.from('commissions').insert({ user_id: referrer.id, from_user_id: deposit.user_id, amount: comm, type: 'referral', description: `Commission from ${plan.name} purchase` });
+          }
+        }
+      }
+    }
+
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -585,12 +635,17 @@ app.post('/api/generate-qr', adminAuth, async (req, res) => {
 
 app.get('/api/payment-qr/:amount', async (req, res) => {
   try {
-    const { data } = await supabase.from('settings').select('value').eq('key', 'upi_id').single();
-    const upiId = data?.value || 'greenpower@upi';
     const amount = req.params.amount;
-    const upiString = `upi://pay?pa=${upiId}&pn=GreenPower&am=${amount}`;
+    // Fetch upi_id and upi_name from settings
+    const { data: settings } = await supabase.from('settings').select('key, value').in('key', ['upi_id', 'upi_name']);
+    const smap = {};
+    (settings || []).forEach(s => smap[s.key] = s.value);
+    const upiId = smap['upi_id'] || 'greenpower@upi';
+    const upiName = smap['upi_name'] || 'GreenPower';
+    // Always generate fresh QR from latest upi_id
+    const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${amount}&cu=INR`;
     const qrCode = await QRCode.toDataURL(upiString);
-    res.json({ success: true, qr: qrCode, upiId, amount });
+    res.json({ success: true, qr: qrCode, upiId, upiName, amount });
   } catch (e) {
     res.status(400).json({ error: 'QR generation failed' });
   }

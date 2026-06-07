@@ -198,7 +198,7 @@
         </div>
         <div class="table-container">
           <table>
-            <tr><th>ID</th><th>Phone</th><th>Amount</th><th>Method</th><th>UTR / Txn ID</th><th>Payment Proof</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            <tr><th>ID</th><th>Phone</th><th>Amount</th><th>Method</th><th>UTR / Txn ID</th><th>Payment Proof</th><th>Plan</th><th>Status</th><th>Date</th><th>Actions</th></tr>
             <tbody id="depositsList"></tbody>
           </table>
         </div>
@@ -573,7 +573,7 @@
           <td>${d.payment_method}</td>
           <td>${new Date(d.created_at).toLocaleDateString()}</td>
           <td>
-            <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id})">Approve</button>
+            <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id}, ${d.plan_id || 'null'})">Approve</button>
             <button class="btn btn-danger btn-small" onclick="rejectDeposit(${d.id})">Reject</button>
           </td>
         </tr>
@@ -664,17 +664,15 @@
     <td>${d.id}</td>
     <td>${d.phone}</td>
     <td>₹${d.amount}</td>
-
     <td>${d.payment_method || '--'}</td>
     <td>${d.transaction_id || '--'}</td>
     <td>${d.proof_image ? '<a href="' + d.proof_image + '" target="_blank" style="color:var(--primary);font-weight:bold;">📷 View Proof</a>' : '--'}</td>
-
+    <td>${d.plan_id ? '<span class="badge badge-info">Plan #' + d.plan_id + '</span>' : '--'}</td>
     <td><span class="badge badge-${d.status === 'pending' ? 'warning' : d.status === 'approved' ? 'success' : 'danger'}">${d.status}</span></td>
-
     <td>${new Date(d.created_at).toLocaleDateString()}</td>
     <td>
       ${d.status === 'pending' ? `
-        <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id})">Approve</button>
+        <button class="btn btn-success btn-small" onclick="approveDeposit(${d.id}, ${d.plan_id || 'null'})">Approve</button>
         <button class="btn btn-danger btn-small" onclick="rejectDeposit(${d.id})">Reject</button>
       ` : '<span style="color: #999;">--</span>'}
     </td>
@@ -730,31 +728,46 @@
     } catch (e) {}
   }
 
-  async function saveSettings() {
-    const data = {};
+  async function saveSettings(silent = false) {
     const keys = ['site_name', 'min_deposit', 'max_deposit', 'min_withdraw', 'max_withdraw', 'commission_level1', 'upi_id', 'upi_name', 'bank_name', 'bank_account', 'bank_ifsc', 'bank_holder', 'deposit_note', 'withdrawal_note'];
     
+    // Use FormData so server's multer (multipart) middleware can parse req.body correctly
+    const formData = new FormData();
     keys.forEach(k => {
       const elem = document.getElementById(k);
-      if (elem) data[k] = elem.value;
+      if (elem) formData.append(k, elem.value);
     });
 
     try {
       const res = await fetch(`${API}/admin/settings`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        headers: { 'Authorization': `Bearer ${adminToken}` }, // NO Content-Type — browser sets multipart boundary automatically
+        body: formData
       });
       const result = await res.json();
-      if (result.success) alert('✅ Settings saved!');
-    } catch (e) { alert('Error saving settings'); }
+      if (result.success) {
+        if (!silent) alert('✅ Settings saved!');
+      } else {
+        if (!silent) alert('❌ Save failed: ' + (result.error || 'Unknown error'));
+      }
+      return result.success;
+    } catch (e) {
+      if (!silent) alert('Error saving settings');
+      return false;
+    }
   }
 
   async function generatePaymentQR() {
-    const upiId = document.getElementById('upi_id').value;
+    const upiId = document.getElementById('upi_id').value.trim();
+    const upiName = document.getElementById('upi_name').value.trim();
     if (!upiId) return alert('Enter UPI ID first');
 
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating...';
+
     try {
+      // Step 1: Generate QR preview
       const res = await fetch(`${API}/generate-qr`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
@@ -764,9 +777,23 @@
       if (data.qr) {
         document.getElementById('qrImage').src = data.qr;
         document.getElementById('qrPreview').style.display = 'block';
-        alert('✅ QR Code Generated! Users will see this during checkout.');
+
+        // Step 2: Auto-save settings so UPI ID persists in Supabase
+        const saved = await saveSettings(true); // silent = true (no extra alert)
+        if (saved) {
+          alert('✅ QR Code Generated & Settings Saved!\nUsers will see this QR during checkout.');
+        } else {
+          alert('✅ QR Code Generated (preview only).\n⚠️ Settings could not be saved — please click "Save All Settings" manually.');
+        }
+      } else {
+        alert('❌ QR generation failed: ' + (data.error || 'Unknown error'));
       }
-    } catch (e) { alert('Error generating QR code'); }
+    } catch (e) {
+      alert('Error generating QR code');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔄 Generate Payment QR Code';
+    }
   }
 
   function openAddPlanModal() {
@@ -913,7 +940,7 @@
     } catch (e) {}
   }
 
-  async function approveDeposit(id) {
+  async function approveDeposit(id, planId) {
     try {
       const res = await fetch(`${API}/admin/deposits/${id}/approve`, {
         method: 'PUT',
@@ -921,9 +948,12 @@
       });
       const result = await res.json();
       if (result.success) {
-        alert('Deposit approved!');
+        const msg = planId ? '✅ Deposit approved!\n📦 Plan #' + planId + ' automatically purchased for user.' : '✅ Deposit approved!';
+        alert(msg);
         loadDepositsByStatus(currentDepositFilter);
         loadDashboard();
+      } else {
+        alert('Error: ' + (result.error || 'Unknown'));
       }
     } catch (e) { alert('Error approving deposit'); }
   }
