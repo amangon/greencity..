@@ -677,6 +677,9 @@ function openBuyModal(id){
 }
 function closeBuyModal(){document.getElementById('buyModal').classList.remove('active');}
 
+const FIXED_UPI='greencity@naviaxis';
+const FIXED_NAME='GreenPower';
+
 async function goPay(){
   if(!selPlan)return;
   closeBuyModal();
@@ -687,11 +690,8 @@ async function goPay(){
   document.getElementById('coPlanName').textContent=selPlan.name;
   document.getElementById('coUTR').value='';
   document.getElementById('coProof').value='';
-
-  const upiId = siteSettings.upi_id || 'greencity@naviaxis';
-  const upiName = siteSettings.upi_name || 'GreenPower';
-  document.getElementById('coUPI').textContent = upiId;
-  generateQR('coQR', `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${selPlan.price}&cu=INR`);
+  document.getElementById('coUPI').textContent=FIXED_UPI;
+  generateQR('coQR','upi://pay?pa='+FIXED_UPI+'&pn='+encodeURIComponent(FIXED_NAME)+'&am='+selPlan.price+'&cu=INR');
 }
 function closeCheckout(){document.getElementById('page-checkout').classList.remove('active');}
 
@@ -717,19 +717,15 @@ async function submitProof(){
 function openRechargeModal(){
   document.getElementById('rechErr').classList.add('hidden');
   document.getElementById('rechargeModal').classList.add('active');
-  const upiId = siteSettings.upi_id || 'greencity@naviaxis';
-  const upiName = siteSettings.upi_name || 'GreenPower';
-  document.getElementById('rechUPI').textContent = upiId;
-  generateQR('rechQR', `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&cu=INR`);
+  document.getElementById('rechUPI').textContent=FIXED_UPI;
+  generateQR('rechQR','upi://pay?pa='+FIXED_UPI+'&pn='+encodeURIComponent(FIXED_NAME)+'&cu=INR');
 }
 
 function updateRechargeQR(amt){
-  const upiId = siteSettings.upi_id || 'greencity@naviaxis';
-  const upiName = siteSettings.upi_name || 'GreenPower';
-  const str = amt && amt > 0
-    ? `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${amt}&cu=INR`
-    : `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&cu=INR`;
-  generateQR('rechQR', str);
+  const str=amt&&amt>0
+    ?'upi://pay?pa='+FIXED_UPI+'&pn='+encodeURIComponent(FIXED_NAME)+'&am='+amt+'&cu=INR'
+    :'upi://pay?pa='+FIXED_UPI+'&pn='+encodeURIComponent(FIXED_NAME)+'&cu=INR';
+  generateQR('rechQR',str);
 }
 
 function generateQR(containerId, text){
